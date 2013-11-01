@@ -1,0 +1,20 @@
+diff -up gtk+-3.8.4/gtk/gtktextattributes.h.multilib gtk+-3.8.4/gtk/gtktextattributes.h
+--- gtk+-3.8.4/gtk/gtktextattributes.h.multilib	2013-11-01 11:37:48.770148541 -0400
++++ gtk+-3.8.4/gtk/gtktextattributes.h	2013-11-01 11:51:00.708693132 -0400
+@@ -102,12 +102,10 @@ struct _GtkTextAppearance
+   guint inside_selection : 1;
+   guint is_text : 1;
+ 
+-  GdkRGBA *rgba[2];
+-
+-#if (defined(__SIZEOF_INT__) && defined(__SIZEOF_POINTER__)) && (__SIZEOF_INT__ == __SIZEOF_POINTER__)
+-  /* unusable, just for ABI compat */
+-  guint padding[2];
+-#endif
++  union {
++    GdkRGBA *rgba[2];
++    guint padding[4];
++  };
+ };
+ 
+ struct _GtkTextAttributes
