@@ -1,0 +1,41 @@
+From 860d9870019ea49de1485940001a485953658145 Mon Sep 17 00:00:00 2001
+From: Carlos Garnacho <carlosg@gnome.org>
+Date: Wed, 4 Dec 2013 12:34:31 +0100
+Subject: [PATCH 1/2] x11: Handle all XI2 crossing mode values in switch
+
+This fixes potential assertions if a GTK+ app gets to receive
+a XINotifyPassiveGrab/Ungrab pointer crossing event, currently
+triggerable by XIGrabEnter passive grabs.
+
+http://bugzilla.gnome.org/show_bug.cgi?id=719762
+---
+ gdk/x11/gdkdevicemanager-xi2.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/gdk/x11/gdkdevicemanager-xi2.c b/gdk/x11/gdkdevicemanager-xi2.c
+index fa02b65..c0368bf 100644
+--- a/gdk/x11/gdkdevicemanager-xi2.c
++++ b/gdk/x11/gdkdevicemanager-xi2.c
+@@ -780,12 +780,16 @@ translate_crossing_mode (gint mode)
+ {
+   switch (mode)
+     {
+-    case NotifyNormal:
++    case XINotifyNormal:
+       return GDK_CROSSING_NORMAL;
+-    case NotifyGrab:
++    case XINotifyGrab:
++    case XINotifyPassiveGrab:
+       return GDK_CROSSING_GRAB;
+-    case NotifyUngrab:
++    case XINotifyUngrab:
++    case XINotifyPassiveUngrab:
+       return GDK_CROSSING_UNGRAB;
++    case XINotifyWhileGrabbed:
++      /* Fall through, unexpected in pointer crossing events */
+     default:
+       g_assert_not_reached ();
+     }
+-- 
+1.8.4.2
+

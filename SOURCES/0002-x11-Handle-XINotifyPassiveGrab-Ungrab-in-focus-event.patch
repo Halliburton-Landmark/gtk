@@ -1,0 +1,55 @@
+From 26fa630c65656f2057bcb2865f91559be3746595 Mon Sep 17 00:00:00 2001
+From: Carlos Garnacho <carlosg@gnome.org>
+Date: Wed, 4 Dec 2013 12:49:02 +0100
+Subject: [PATCH 2/2] x11: Handle XINotifyPassiveGrab/Ungrab in focus events
+
+The focus handling code is shared between core and XI2 implementations,
+so just handle the extra XI2 types for passive grabs. Those must be dealt
+with in the same way than active grabs. Focus events with this crossing
+mode could happen currently through the XIGrabFocusIn passive grab.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=719762
+---
+ gdk/x11/gdkdevicemanager-core-x11.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/gdk/x11/gdkdevicemanager-core-x11.c b/gdk/x11/gdkdevicemanager-core-x11.c
+index 0e49fb7..fa6baa2 100644
+--- a/gdk/x11/gdkdevicemanager-core-x11.c
++++ b/gdk/x11/gdkdevicemanager-core-x11.c
+@@ -838,6 +838,10 @@ _gdk_device_manager_core_handle_focus (GdkWindow *window,
+        */
+       if (toplevel->has_pointer &&
+           mode != NotifyGrab &&
++#ifdef XINPUT_2
++	  mode != XINotifyPassiveGrab &&
++	  mode != XINotifyPassiveUngrab &&
++#endif /* XINPUT_2 */
+           mode != NotifyUngrab)
+         toplevel->has_pointer_focus = (focus_in) ? FALSE : TRUE;
+ 
+@@ -845,6 +849,10 @@ _gdk_device_manager_core_handle_focus (GdkWindow *window,
+     case NotifyNonlinear:
+     case NotifyNonlinearVirtual:
+       if (mode != NotifyGrab &&
++#ifdef XINPUT_2
++	  mode != XINotifyPassiveGrab &&
++	  mode != XINotifyPassiveUngrab &&
++#endif /* XINPUT_2 */
+           mode != NotifyUngrab)
+         toplevel->has_focus_window = (focus_in) ? TRUE : FALSE;
+       /* We pretend that the focus moves to the grab
+@@ -860,6 +868,10 @@ _gdk_device_manager_core_handle_focus (GdkWindow *window,
+        * grab is in effect
+        */
+       if (mode != NotifyGrab &&
++#ifdef XINPUT_2
++	  mode != XINotifyPassiveGrab &&
++	  mode != XINotifyPassiveUngrab &&
++#endif /* XINPUT_2 */
+           mode != NotifyUngrab)
+         toplevel->has_pointer_focus = (focus_in) ? TRUE : FALSE;
+       break;
+-- 
+1.8.4.2
+

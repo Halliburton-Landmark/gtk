@@ -15,7 +15,7 @@
 
 Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
 Name: gtk3
-Version: 3.8.4
+Version: 3.8.8
 Release: 5%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -25,6 +25,14 @@ Source: http://download.gnome.org/sources/gtk+/3.8/gtk+-%{version}.tar.xz
 
 # https://bugzilla.gnome.org/show_bug.cgi?id=711158
 Patch0: gtk3-gir-multilib.patch
+
+# http://bugzilla.gnome.org/show_bug.cgi?id=719762
+Patch1: 0001-x11-Handle-all-XI2-crossing-mode-values-in-switch.patch
+Patch2: 0002-x11-Handle-XINotifyPassiveGrab-Ungrab-in-focus-event.patch
+
+Patch3: translations.patch
+
+Patch4: 0001-window-Sanitize-size-hint-computation.patch
 
 BuildRequires: gnome-common autoconf automake intltool gettext
 BuildRequires: atk-devel >= %{atk_version}
@@ -126,6 +134,10 @@ widget toolkit.
 %prep
 %setup -q -n gtk+-%{version}
 %patch0 -p1 -b .multilib
+%patch1 -p1
+%patch2 -p1
+%patch3 -p2
+%patch4 -p1
 
 %build
 
@@ -273,6 +285,32 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/gtk-doc
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.8.8-5
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 3.8.8-4
+- Mass rebuild 2013-12-27
+
+* Mon Dec 16 2013 Benjamin Otte <otte@redhat.com> - 3.8.8-3
+- Stop window shaking at startup of firstboot
+- Resolves: #1035409
+
+* Wed Dec 11 2013 Matthias Clasen <mclasen@redhat.com> - 3.8.8-2
+- Update translations
+- Resolves: #1030356
+
+* Wed Dec  4 2013 Matthias Clasen <mclasen@redhat.com> - 3.8.8-1
+- Update to 3.8.8
+- Resolves: #1031802, #1031089
+
+* Wed Nov 27 2013 Florian Müllner <fmuellner@redhat.com> - 3.8.4-8
+- Revert last change - the issue will be addressed in gnome-session instead
+  Resolves: #1031117
+
+* Fri Nov 22 2013 Florian Müllner <fmuellner@redhat.com> - 3.8.4-6
+- Follow upstream in a GtkBin commit war
+  Resolves: #1031117
+
 * Fri Nov  1 2013 Matthias Clasen <mclasen@redhat.com> - 3.8.4-5
 - Avoid losing %optflags
 - Related: #881175
