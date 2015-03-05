@@ -1,0 +1,181 @@
+From 9af2710d843c9e17459737cb8530abf466a89b9e Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Mon, 19 May 2014 23:20:56 -0400
+Subject: [PATCH] Add man pages for gtk3-demo and gtk3-widget-factory
+
+We install the applications, so they should also have some docs.
+---
+ docs/reference/gtk/Makefile.am             |  2 +
+ docs/reference/gtk/gtk-docs.sgml           |  2 +
+ docs/reference/gtk/gtk3-demo.xml           | 59 ++++++++++++++++++++++++++++++
+ docs/reference/gtk/gtk3-widget-factory.xml | 59 ++++++++++++++++++++++++++++++
+ 4 files changed, 122 insertions(+)
+ create mode 100644 docs/reference/gtk/gtk3-demo.xml
+ create mode 100644 docs/reference/gtk/gtk3-widget-factory.xml
+
+diff --git a/docs/reference/gtk/Makefile.am b/docs/reference/gtk/Makefile.am
+index c488aa0..8f44cc8 100644
+--- a/docs/reference/gtk/Makefile.am
++++ b/docs/reference/gtk/Makefile.am
+@@ -151,6 +151,7 @@ content_files =					\
+ 	tree_widget.sgml			\
+ 	windows.sgml				\
+ 	x11.sgml				\
++	gtk3-demo.xml				\
+ 	gtk-query-immodules-3.0.xml		\
+ 	gtk-update-icon-cache.xml		\
+ 	gtk-launch.xml				\
+@@ -447,6 +448,7 @@ man_MANS = 				\
+ 	gtk-query-immodules-3.0.1	\
+ 	gtk-update-icon-cache.1		\
+ 	gtk-launch.1			\
++	gtk3-demo.1			\
+ 	broadwayd.1
+ 
+ if ENABLE_MAN
+diff --git a/docs/reference/gtk/gtk-docs.sgml b/docs/reference/gtk/gtk-docs.sgml
+index 9353b15..8db7671 100644
+--- a/docs/reference/gtk/gtk-docs.sgml
++++ b/docs/reference/gtk/gtk-docs.sgml
+@@ -378,6 +378,8 @@
+ 
+   <part>
+     <title>GTK+ Tools</title>
++    <xi:include href="gtk3-demo.xml" />
++    <xi:include href="gtk3-widget-factory.xml" />
+     <xi:include href="gtk-query-immodules-3.0.xml" />
+     <xi:include href="gtk-update-icon-cache.xml" />
+     <xi:include href="gtk-launch.xml" />
+diff --git a/docs/reference/gtk/gtk3-demo.xml b/docs/reference/gtk/gtk3-demo.xml
+new file mode 100644
+index 0000000..47b32f5
+--- /dev/null
++++ b/docs/reference/gtk/gtk3-demo.xml
+@@ -0,0 +1,59 @@
++<?xml version="1.0"?>
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
++               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
++]>
++<refentry id="gtk3-demo">
++
++<refentryinfo>
++  <title>gtk3-demo</title>
++  <productname>GTK+</productname>
++  <authorgroup>
++    <author>
++      <contrib>Developer</contrib>
++      <firstname>Matthias</firstname>
++      <surname>Clasen</surname>
++    </author>
++  </authorgroup>
++</refentryinfo>
++
++<refmeta>
++  <refentrytitle>gtk3-demo</refentrytitle>
++  <manvolnum>1</manvolnum>
++  <refmiscinfo class="manual">User Commands</refmiscinfo>
++</refmeta>
++
++<refnamediv>
++  <refname>gtk3-demo</refname>
++  <refpurpose>Demonstrate GTK+ widgets</refpurpose>
++</refnamediv>
++
++<refsynopsisdiv>
++<cmdsynopsis>
++<command>gtk3-demo</command>
++<arg choice="opt">--help</arg>
++</cmdsynopsis>
++</refsynopsisdiv>
++
++<refsect1><title>Description</title>
++<para>
++<command>gtk3-demo</command> is a collection of examples.
++Its purpose is to demonstrate many GTK+ widgets in a form
++that is useful to application developers.
++</para>
++<para>
++The application shows the source code for each example, as well as
++other used resources, such as ui files and icons.
++</para>
++</refsect1>
++
++<refsect1><title>Options</title>
++  <para>The following options are understood:</para>
++  <variablelist>
++    <varlistentry>
++    <term><option>-h</option>, <option>--help</option></term>
++      <listitem><para>Show help options</para></listitem>
++    </varlistentry>
++  </variablelist>
++</refsect1>
++
++</refentry>
+diff --git a/docs/reference/gtk/gtk3-widget-factory.xml b/docs/reference/gtk/gtk3-widget-factory.xml
+new file mode 100644
+index 0000000..fa5d21d
+--- /dev/null
++++ b/docs/reference/gtk/gtk3-widget-factory.xml
+@@ -0,0 +1,59 @@
++<?xml version="1.0"?>
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
++               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
++]>
++<refentry id="gtk3-widget-factory">
++
++<refentryinfo>
++  <title>gtk3-widget-factory</title>
++  <productname>GTK+</productname>
++  <authorgroup>
++    <author>
++      <contrib>Developer</contrib>
++      <firstname>Matthias</firstname>
++      <surname>Clasen</surname>
++    </author>
++  </authorgroup>
++</refentryinfo>
++
++<refmeta>
++  <refentrytitle>gtk3-widget-factory</refentrytitle>
++  <manvolnum>1</manvolnum>
++  <refmiscinfo class="manual">User Commands</refmiscinfo>
++</refmeta>
++
++<refnamediv>
++  <refname>gtk3-widget-factory</refname>
++  <refpurpose>Demonstrate GTK+ widgets</refpurpose>
++</refnamediv>
++
++<refsynopsisdiv>
++<cmdsynopsis>
++<command>gtk3-widget-factory</command>
++<arg choice="opt">--help</arg>
++</cmdsynopsis>
++</refsynopsisdiv>
++
++<refsect1><title>Description</title>
++<para>
++<command>gtk3-widget-factory</command> is a collection of examples.
++Its purpose is to demonstrate many GTK+ widgets in a form
++that is useful to GTK+ theme developers.
++</para>
++<para>
++The application shows widgets in different, typical combinations
++and states.
++</para>
++</refsect1>
++
++<refsect1><title>Options</title>
++  <para>The following options are understood:</para>
++  <variablelist>
++    <varlistentry>
++    <term><option>-h</option>, <option>--help</option></term>
++      <listitem><para>Show help options</para></listitem>
++    </varlistentry>
++  </variablelist>
++</refsect1>
++
++</refentry>
+-- 
+1.9.3
+

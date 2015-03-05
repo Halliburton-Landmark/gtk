@@ -1,0 +1,32 @@
+From 0c4dc3c15702a8daff58e63211235d91ec19b32e Mon Sep 17 00:00:00 2001
+From: Rico Tzschichholz <ricotz@ubuntu.com>
+Date: Tue, 20 May 2014 08:11:44 +0200
+Subject: [PATCH] docs: Fix make dist
+
+---
+ docs/reference/gtk/Makefile.am | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/docs/reference/gtk/Makefile.am b/docs/reference/gtk/Makefile.am
+index 8f44cc8..8206452 100644
+--- a/docs/reference/gtk/Makefile.am
++++ b/docs/reference/gtk/Makefile.am
+@@ -152,6 +152,7 @@ content_files =					\
+ 	windows.sgml				\
+ 	x11.sgml				\
+ 	gtk3-demo.xml				\
++	gtk3-widget-factory.xml			\
+ 	gtk-query-immodules-3.0.xml		\
+ 	gtk-update-icon-cache.xml		\
+ 	gtk-launch.xml				\
+@@ -449,6 +450,7 @@ man_MANS = 				\
+ 	gtk-update-icon-cache.1		\
+ 	gtk-launch.1			\
+ 	gtk3-demo.1			\
++	gtk3-widget-factory.1		\
+ 	broadwayd.1
+ 
+ if ENABLE_MAN
+-- 
+1.9.3
+

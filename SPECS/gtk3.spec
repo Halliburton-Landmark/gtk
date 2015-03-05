@@ -16,7 +16,7 @@
 Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
 Name: gtk3
 Version: 3.8.8
-Release: 5%{?dist}
+Release: 10%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: http://www.gtk.org
@@ -33,6 +33,23 @@ Patch2: 0002-x11-Handle-XINotifyPassiveGrab-Ungrab-in-focus-event.patch
 Patch3: translations.patch
 
 Patch4: 0001-window-Sanitize-size-hint-computation.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=982295
+Patch5: 0001-GtkExpander-Fix-a-problem-with-resize-toplevel.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=948432
+Patch6: 0001-Add-man-pages-for-gtk3-demo-and-gtk3-widget-factory.patch
+Patch7: 0002-docs-Fix-make-dist.patch
+Patch8: 0003-docs-Add-a-man-page-fro-gtk3-demo-application.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1090126
+Patch9: 0001-Pull-all-changes-from-gtkcellrenderaccel-c-up-to-3-14-0.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1062938
+Patch10: 0001-menu-Do-a-proper-min-height-request.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1150290
+Patch11: 0001-treemodelfilter-Fix-using-wrong-path-on-row-deleted.patch
 
 BuildRequires: gnome-common autoconf automake intltool gettext
 BuildRequires: atk-devel >= %{atk_version}
@@ -138,6 +155,13 @@ widget toolkit.
 %patch2 -p1
 %patch3 -p2
 %patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
 
 %build
 
@@ -245,6 +269,9 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %ghost %{_libdir}/gtk-3.0/%{bin_version}/immodules.cache
 %{_mandir}/man1/gtk-query-immodules-3.0*
 %{_mandir}/man1/gtk-launch.1.gz
+%{_mandir}/man1/gtk3-demo.1.gz
+%{_mandir}/man1/gtk3-demo-application.1.gz
+%{_mandir}/man1/gtk3-widget-factory.1.gz
 %exclude %{_mandir}/man1/gtk-update-icon-cache.1.gz
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.FileChooser.gschema.xml
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.ColorChooser.gschema.xml
@@ -285,6 +312,28 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/gtk-doc
 
 %changelog
+* Tue Dec 16 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-10
+- Don't accidentally export function
+- Resolves: #1168685
+
+* Fri Oct 31 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-9
+- Don't crash when alt-tabbing in gedit
+- Resolves: #1150290
+
+* Mon Oct 20 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-8
+- Fix breakage introduced by patch
+- Resolves: #1090126
+
+* Sun Oct 05 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-7
+- Fix height request on labels
+- Resolves: #1062938
+
+* Fri Oct 03 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-6
+- Properly resize toplevel when collapsing GtkExpander
+- Add missing man pages
+- Allow remapping all keys
+- Resolves: #982295, #948432, #1090126
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.8.8-5
 - Mass rebuild 2014-01-24
 
