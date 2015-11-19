@@ -3,11 +3,11 @@
 %global with_broadway 1
 %endif
 
-%global glib2_version 2.35.3
-%global pango_version 1.32.4
-%global gdk_pixbuf_version 2.27.1
-%global atk_version 2.7.5
-%global cairo_version 1.10.0
+%global glib2_version 2.41.2
+%global pango_version 1.36.7
+%global gdk_pixbuf_version 2.30.0
+%global atk_version 2.12.0
+%global cairo_version 1.13.1
 %global xrandr_version 1.2.99.4-2
 %global gobject_introspection_version 1.36.0-2
 
@@ -15,41 +15,40 @@
 
 Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
 Name: gtk3
-Version: 3.8.8
-Release: 10%{?dist}
+Version: 3.14.13
+Release: 16%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: http://www.gtk.org
 #VCS: git:git://git.gnome.org/gtk+
-Source: http://download.gnome.org/sources/gtk+/3.8/gtk+-%{version}.tar.xz
+Source: http://download.gnome.org/sources/gtk+/3.14/gtk+-%{version}.tar.xz
+Source1: settings.ini
 
-# https://bugzilla.gnome.org/show_bug.cgi?id=711158
-Patch0: gtk3-gir-multilib.patch
+# upstream fixes
+Patch0: 0001-Add-an-XSetting-for-the-session-bus-ID.patch
+Patch1: 0002-GtkApplication-Try-to-cope-with-ssh-situations-bette.patch
+Patch2: 0001-printing-Check-connection-to-remote-CUPS-server-on-c.patch
+# updated translations
+Patch3: gtk3-translations-3.14.patch
+Patch4: disarm-deprecations.patch
+Patch5: 0001-GtkMenuButton-Submit-to-action.patch
+Patch6: 0001-GtkSwitch-fix-a-reentry-issue.patch
+Patch7: 0001-GdkDisplayX11-Properly-translate-server-timestamps-f.patch
 
-# http://bugzilla.gnome.org/show_bug.cgi?id=719762
-Patch1: 0001-x11-Handle-all-XI2-crossing-mode-values-in-switch.patch
-Patch2: 0002-x11-Handle-XINotifyPassiveGrab-Ungrab-in-focus-event.patch
+# coverity fixes
+Patch8: 0001-gtk-demo-Check-a-return-value.patch
+Patch9: 0002-gtkbuilderparser-Add-some-assertions.patch
+Patch10: 0003-gtkicontheme-Check-a-return-value.patch
+Patch11: 0004-inspector-Annotate-a-call-whose-return-value-we-don-.patch
+Patch12: 0005-inspector-Check-a-return-value.patch
+Patch13: 0006-cups-Annotate-a-call-whose-return-value-we-don-t-car.patch
+Patch14: 0007-testdialog-Error-out-if-templates-are-missing.patch
 
-Patch3: translations.patch
-
-Patch4: 0001-window-Sanitize-size-hint-computation.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=982295
-Patch5: 0001-GtkExpander-Fix-a-problem-with-resize-toplevel.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=948432
-Patch6: 0001-Add-man-pages-for-gtk3-demo-and-gtk3-widget-factory.patch
-Patch7: 0002-docs-Fix-make-dist.patch
-Patch8: 0003-docs-Add-a-man-page-fro-gtk3-demo-application.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1090126
-Patch9: 0001-Pull-all-changes-from-gtkcellrenderaccel-c-up-to-3-14-0.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1062938
-Patch10: 0001-menu-Do-a-proper-min-height-request.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1150290
-Patch11: 0001-treemodelfilter-Fix-using-wrong-path-on-row-deleted.patch
+# upstream crash fixes
+Patch15: 0001-gtkdnd-Account-for-setting-a-same-icon-helper.patch
+Patch16: 0001-Avoid-g_set_object.patch
+Patch17: placessidebar-crash.patch
+Patch18: app-chooser-fixes.patch
 
 BuildRequires: gnome-common autoconf automake intltool gettext
 BuildRequires: atk-devel >= %{atk_version}
@@ -64,6 +63,8 @@ BuildRequires: libXi-devel
 BuildRequires: gettext
 BuildRequires: gtk-doc
 BuildRequires: cups-devel
+BuildRequires: rest-devel
+BuildRequires: json-glib-devel
 BuildRequires: libXrandr-devel >= %{xrandr_version}
 BuildRequires: libXrender-devel
 BuildRequires: libXcursor-devel
@@ -75,11 +76,15 @@ BuildRequires: libXi-devel
 BuildRequires: gobject-introspection-devel >= %{gobject_introspection_version}
 BuildRequires: colord-devel
 BuildRequires: avahi-gobject-devel
+BuildRequires: desktop-file-utils
 %if 0%{?with_wayland}
 BuildRequires: libwayland-client-devel
 BuildRequires: libwayland-cursor-devel
 BuildRequires: libxkbcommon-devel
 %endif
+
+# standard icons
+Requires: adwaita-icon-theme
 
 # required for icon theme apis to work
 Requires: hicolor-icon-theme
@@ -90,8 +95,19 @@ Requires(post): atk >= %{atk_version}
 Requires(post): pango >= %{pango_version}
 Requires: libXrandr >= %{xrandr_version}
 
+Requires: cairo%{?_isa} >= %{cairo_version}
+Requires: cairo-gobject%{?_isa} >= %{cairo_version}
+Requires: libXrandr%{?_isa} >= %{xrandr_version}
+%if 0%{?with_wayland}
+Requires: libwayland-client%{?_isa} >= %{wayland_version}
+Requires: libwayland-cursor%{?_isa} >= %{wayland_version}
+%endif
+
 # gtk3 no longer provides the GtkThemeEngine interface used there
 Obsoletes: gtk3-engines <= 2.91.5-5.fc15
+
+Obsoletes: adwaita-gtk3-theme < 3.13.3
+Provides: adwaita-gtk3-theme = 3.13.4
 
 %description
 GTK+ is a multi-platform toolkit for creating graphical user
@@ -106,7 +122,7 @@ Summary: Input methods for GTK+
 Group: System Environment/Libraries
 Requires: gtk3%{?_isa} = %{version}-%{release}
 # for im-cedilla.conf
-Requires: gtk2-immodules
+Requires: gtk2-immodules%{?_isa}
 
 %description immodules
 The gtk3-immodules package contains standalone input methods that
@@ -123,7 +139,7 @@ The gtk3-immodule-xim package contains XIM support for GTK+ 3.
 %package devel
 Summary: Development files for GTK+
 Group: Development/Libraries
-Requires: gtk3 = %{version}-%{release}
+Requires: gtk3%{?_isa} = %{version}-%{release}
 Requires: gdk-pixbuf2-devel
 Requires: libX11-devel, libXcursor-devel, libXinerama-devel
 Requires: libXext-devel, libXi-devel, libXrandr-devel
@@ -150,18 +166,25 @@ widget toolkit.
 
 %prep
 %setup -q -n gtk+-%{version}
-%patch0 -p1 -b .multilib
-%patch1 -p1
-%patch2 -p1
-%patch3 -p2
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
+%patch0 -p1 -b .ssh-xsetting
+%patch1 -p1 -b .ssh-appmenu
+%patch2 -p1 -b .cups-port
+%patch3 -p1 -b .translations
+%patch4 -p1 -b .deprecations
+%patch5 -p1 -b .menubutton
+%patch6 -p1 -b .switch
+%patch7 -p1 -b .ssh
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
 
 %build
 
@@ -190,6 +213,11 @@ sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
 
 make %{?_smp_mflags}
 
+%check
+for f in %{buildroot}%{_datadir}/applications/*.desktop; do
+  desktop-file-validate $f
+done
+
 %install
 make install DESTDIR=$RPM_BUILD_ROOT        \
              RUN_QUERY_IMMODULES_TEST=false
@@ -217,6 +245,9 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/gtk-3.0
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/modules
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/immodules
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/%{bin_version}/theming-engines
+
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/gtk-3.0
+cp $RPM_SOURCE_DIR/settings.ini $RPM_BUILD_ROOT%{_datadir}/gtk-3.0/settings.ini
 
 %post
 /sbin/ldconfig
@@ -257,6 +288,7 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_libdir}/libgailutil-3.so.*
 %dir %{_libdir}/gtk-3.0
 %dir %{_libdir}/gtk-3.0/%{bin_version}
+%{_datadir}/gtk-3.0
 %{_libdir}/gtk-3.0/%{bin_version}/theming-engines
 %dir %{_libdir}/gtk-3.0/%{bin_version}/immodules
 %{_libdir}/gtk-3.0/%{bin_version}/printbackends
@@ -265,16 +297,14 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/themes/Default
 %{_datadir}/themes/Emacs
 %{_libdir}/girepository-1.0
-%dir %{_sysconfdir}/gtk-3.0
 %ghost %{_libdir}/gtk-3.0/%{bin_version}/immodules.cache
 %{_mandir}/man1/gtk-query-immodules-3.0*
 %{_mandir}/man1/gtk-launch.1.gz
-%{_mandir}/man1/gtk3-demo.1.gz
-%{_mandir}/man1/gtk3-demo-application.1.gz
-%{_mandir}/man1/gtk3-widget-factory.1.gz
 %exclude %{_mandir}/man1/gtk-update-icon-cache.1.gz
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.FileChooser.gschema.xml
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.ColorChooser.gschema.xml
+%{_datadir}/glib-2.0/schemas/org.gtk.Settings.Debug.gschema.xml
+%{_datadir}/glib-2.0/schemas/org.gtk.exampleapp.gschema.xml
 %if 0%{?with_broadway}
 %{_bindir}/broadwayd
 %{_mandir}/man1/broadwayd.1*
@@ -291,6 +321,9 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_libdir}/gtk-3.0/%{bin_version}/immodules/im-ti-er.so
 %{_libdir}/gtk-3.0/%{bin_version}/immodules/im-ti-et.so
 %{_libdir}/gtk-3.0/%{bin_version}/immodules/im-viqr.so
+%if 0%{?with_broadway}
+%{_libdir}/gtk-3.0/%{bin_version}/immodules/im-broadway.so
+%endif
 %config(noreplace) %{_sysconfdir}/gtk-3.0/im-multipress.conf
 
 %files immodule-xim
@@ -302,16 +335,96 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/aclocal/*
 %{_libdir}/pkgconfig/*
 %{_bindir}/gtk3-demo
+%{_bindir}/gtk3-icon-browser
+%{_bindir}/gtk-encode-symbolic-svg
+%{_datadir}/applications/gtk3-demo.desktop
+%{_datadir}/applications/gtk3-icon-browser.desktop
+%{_datadir}/applications/gtk3-widget-factory.desktop
+%{_datadir}/icons/hicolor/*/apps/gtk3-demo.png
+%{_datadir}/icons/hicolor/*/apps/gtk3-widget-factory.png
 %{_bindir}/gtk3-demo-application
 %{_bindir}/gtk3-widget-factory
-%{_datadir}/gtk-3.0
+%{_datadir}/gtk-3.0/gtkbuilder.rng
 %{_datadir}/gir-1.0
 %{_datadir}/glib-2.0/schemas/org.gtk.Demo.gschema.xml
+%{_mandir}/man1/gtk3-demo.1*
+%{_mandir}/man1/gtk3-demo-application.1*
+%{_mandir}/man1/gtk3-icon-browser.1*
+%{_mandir}/man1/gtk3-widget-factory.1*
+%{_mandir}/man1/gtk-encode-symbolic-svg.1*
 
 %files devel-docs
 %{_datadir}/gtk-doc
 
 %changelog
+* Wed Sep 23 2015 Ray Strode <rstrode@redhat.com> 3.14.13-16
+- Fix mispelling in previous patch
+Related: #1259292
+
+* Wed Sep 23 2015 Ray Strode <rstrode@redhat.com> 3.14.13-15
+- Fix up app chooser to deal with duplicate entries
+Related: #1259292
+
+* Thu Sep 17 2015 Matthias Clasen <cmlasen@redhat.com> 3.14.13-14
+- Fix a possible crash when reordering bookmarks
+Resolves: #1207187
+
+* Fri Jul 21 2015 Matthias Clasen <cmlasen@redhat.com> 3.14.13-13
+- Fix a possible crash during DND
+Related: #1174442
+
+* Fri Jul 17 2015 Matthias Clasen <mclasen@redhat.com> 3.14.13-12
+- Coverity fixes
+Related: #1174442
+
+* Thu Jul 16 2015 Matthias Clasen <mclasen@redhat.com> 3.14.13-11
+- Fix rendering stalls with ssh connections
+Resolves: #1243646
+
+* Tue Jul 14 2015 Matthias Clasen <mclasen@redhat.com> 3.14.13-10
+- Include a settings.ini file
+Resolves: #1241374
+
+* Tue Jul  7 2015 Matthias Clasen <mclasen@redhat.com> 3.14.13-9
+- Fix a reentrancy issue in GtkSwitch
+Resolves: #1238692
+
+* Thu May 21 2015 Matthias Clasen <mclasen@redhat.com> 3.14.13-8
+- Don't emit warnings for 'new' deprecations by default
+- Disable GtkMenuButton if the associated action says so
+Resolves: #1210747
+Resolves: #1223463 
+
+* Fri May 15 2015 Marek Kasik <mkasik@redhat.com> 3.14.13-7
+- Check connection to remote CUPS server on correct port
+- Resolves: #1221157
+
+* Tue May 12 2015 Richard Hughes <rhughes@redhat.com> 3.14.13-6
+- Rebuild against the new colord version
+- Related: #1174442
+
+* Thu May 07 2015 Ray Strode <rstrode@redhat.com> 3.14.13-5
+- Update adwaita-gtk3-theme provides version to be big enough
+  to upgrade gnome-themes-standard
+  Related: #1174442
+
+* Thu May 07 2015 Ray Strode <rstrode@redhat.com> 3.14.13-4
+- Obsolete adwaita-gtk3-theme
+  Related: #1174442
+
+* Fri May  1 2015 Matthias Clasen <mclasen@redhat.com> -3.14.13-3
+- Handle the app menu on ssh connections better
+- Resolves: #982620
+
+* Wed Apr 29 2015 Matthias Clasen <mclasen@redhat.com> -3.14.13-2
+- Depend on adwaita-icon-theme
+- Related: #1174442
+
+* Tue Apr 28 2015 Matthias Clasen <mclasen@redhat.com> -3.14.13-1
+- Update to 3.14.13
+- Resolves: #1174442
+- Drop patches that have been upstreamed
+
 * Tue Dec 16 2014 Benjamin Otte <otte@redhat.com> - 3.8.8-10
 - Don't accidentally export function
 - Resolves: #1168685

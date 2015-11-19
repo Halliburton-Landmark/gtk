@@ -1,0 +1,28 @@
+From 90dde24d6a79725c674d65677f998f1a45e21598 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Fri, 17 Jul 2015 15:58:24 -0400
+Subject: [PATCH 6/7] cups: Annotate a call whose return value we don't care
+ about
+
+We're closing this fd, but we're not going to do anything else
+if that fails. Annotate to let coverity see this.
+---
+ modules/printbackends/file/gtkprintbackendfile.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/printbackends/file/gtkprintbackendfile.c b/modules/printbackends/file/gtkprintbackendfile.c
+index 44c3ffb..6d98d0f 100644
+--- a/modules/printbackends/file/gtkprintbackendfile.c
++++ b/modules/printbackends/file/gtkprintbackendfile.c
+@@ -390,7 +390,7 @@ file_print_cb_locked (GtkPrintBackendFile *print_backend,
+   GtkRecentManager *recent_manager;
+ 
+   if (ps->target_io_stream != NULL)
+-    g_output_stream_close (G_OUTPUT_STREAM (ps->target_io_stream), NULL, NULL);
++    (void)g_output_stream_close (G_OUTPUT_STREAM (ps->target_io_stream), NULL, NULL);
+ 
+   if (ps->callback)
+     ps->callback (ps->job, ps->user_data, error);
+-- 
+2.4.5
+

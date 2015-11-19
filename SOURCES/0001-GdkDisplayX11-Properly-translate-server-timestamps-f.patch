@@ -1,0 +1,99 @@
+From 2ef204e6071b985d5b8e5d1c25ca0b0abf5f9d31 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 15 Jul 2015 12:38:38 -0400
+Subject: [PATCH 1/2] GdkDisplayX11: Properly translate server timestamps from
+ _NET_WM_FRAME_* messages
+
+When using frame times from _NET_WM_FRAME_DRAWN and _NET_WM_FRAME_TIMINGS, we
+were treating them as local monotonic times, but they are actually extended-precision
+versions of the server time, and need to be translated to monotonic times in the
+case where the X server and client aren't running on the same system.
+
+This fixes rendering stalls when using X over a remote ssh connection.
+https://bugzilla.gnome.org/show_bug.cgi?id=741800
+---
+ gdk/x11/gdkdisplay-x11.c | 43 ++++++++++++++++++++++++++++++++++++++++++-
+ gdk/x11/gdkdisplay-x11.h |  6 ++++++
+ 2 files changed, 48 insertions(+), 1 deletion(-)
+
+diff --git a/gdk/x11/gdkdisplay-x11.c b/gdk/x11/gdkdisplay-x11.c
+index 4fe7524..2fe2cd4 100644
+--- a/gdk/x11/gdkdisplay-x11.c
++++ b/gdk/x11/gdkdisplay-x11.c
+@@ -1096,6 +1096,47 @@ find_frame_timings (GdkFrameClock *clock,
+   return NULL;
+ }
+ 
++/* _NET_WM_FRAME_DRAWN and _NET_WM_FRAME_TIMINGS messages represent time
++ * as a "high resolution server time" - this is the server time interpolated
++ * to microsecond resolution. The advantage of this time representation
++ * is that if  X server is running on the same computer as a client, and
++ * the Xserver uses 'clock_gettime(CLOCK_MONOTONIC, ...)' for the server
++ * time, the client can detect this, and all such clients will share a
++ * a time representation with high accuracy. If there is not a common
++ * time source, then the time synchronization will be less accurate.
++ */
++gint64
++server_time_to_monotonic_time (GdkX11Display *display_x11,
++                               gint64         server_time)
++{
++  if (display_x11->server_time_query_time == 0 ||
++      (!display_x11->server_time_is_monotonic_time &&
++       server_time > display_x11->server_time_query_time + 10*1000*1000)) /* 10 seconds */
++    {
++      gint64 current_server_time = gdk_x11_get_server_time (display_x11->leader_gdk_window);
++      gint64 current_server_time_usec = (gint64)current_server_time * 1000;
++      gint64 current_monotonic_time = g_get_monotonic_time ();
++      display_x11->server_time_query_time = current_monotonic_time;
++
++      /* If the server time is within a second of the monotonic time,
++       * we assume that they are identical. This seems like a big margin,
++       * but we want to be as robust as possible even if the system
++       * is under load and our processing of the server response is
++       * delayed.
++       */
++      if (current_server_time_usec > current_monotonic_time - 1000*1000 &&
++          current_server_time_usec < current_monotonic_time + 1000*1000)
++        display_x11->server_time_is_monotonic_time = TRUE;
++
++      display_x11->server_time_offset = current_server_time_usec - current_monotonic_time;
++    }
++
++  if (display_x11->server_time_is_monotonic_time)
++    return server_time;
++  else
++    return server_time - display_x11->server_time_offset;
++}
++
+ GdkFilterReturn
+ _gdk_wm_protocols_filter (GdkXEvent *xev,
+ 			  GdkEvent  *event,
+@@ -1128,7 +1169,7 @@ _gdk_wm_protocols_filter (GdkXEvent *xev,
+           guint32 d3 = xevent->xclient.data.l[3];
+ 
+           guint64 serial = ((guint64)d1 << 32) | d0;
+-          gint64 frame_drawn_time = ((guint64)d3 << 32) | d2;
++          gint64 frame_drawn_time = server_time_to_monotonic_time (GDK_X11_DISPLAY (display), ((guint64)d3 << 32) | d2);
+           gint64 refresh_interval, presentation_time;
+ 
+           GdkFrameClock *clock = gdk_window_get_frame_clock (win);
+diff --git a/gdk/x11/gdkdisplay-x11.h b/gdk/x11/gdkdisplay-x11.h
+index 69ba890..d9305dd 100644
+--- a/gdk/x11/gdkdisplay-x11.h
++++ b/gdk/x11/gdkdisplay-x11.h
+@@ -124,6 +124,12 @@ struct _GdkX11Display
+   GSList *error_traps;
+ 
+   gint wm_moveresize_button;
++
++  /* Translation between X server time and system-local monotonic time */
++  gint64 server_time_query_time;
++  gint64 server_time_offset;
++
++  guint server_time_is_monotonic_time : 1;
+ };
+ 
+ struct _GdkX11DisplayClass
+-- 
+2.4.5
+

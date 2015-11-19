@@ -1,0 +1,30 @@
+From 0df57451ea447f4f78643da0352d38c4235124bc Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Fri, 17 Jul 2015 16:16:31 -0400
+Subject: [PATCH 5/7] inspector: Check a return value
+
+We don't care about the error here, but we were relying on
+g_resources_get_info to zero the size even in case of error.
+No need to do that, we can just check the return value. Plus,
+it makes coverity happy.
+---
+ gtk/inspector/resource-list.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/inspector/resource-list.c b/gtk/inspector/resource-list.c
+index a9b6a0d..d821775 100644
+--- a/gtk/inspector/resource-list.c
++++ b/gtk/inspector/resource-list.c
+@@ -95,7 +95,8 @@ load_resources_recurse (GtkInspectorResourceList *sl,
+       else
+         {
+           count = 1;
+-          g_resources_get_info (p, 0, &size, NULL, NULL);
++          if (!g_resources_get_info (p, 0, &size, NULL, NULL))
++            size = 0;
+         }
+ 
+       stored_size = size;
+-- 
+2.4.5
+

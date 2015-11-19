@@ -1,0 +1,33 @@
+From 051bd1a06bddca4c543821d630e5328bf51a55b8 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Wed, 1 Jul 2015 18:02:57 -0700
+Subject: [PATCH] GtkSwitch: fix a reentry issue
+
+The introduction of state broke some users which relied on
+being able to set active in a notify::active handler.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=751754
+---
+ gtk/gtkswitch.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtkswitch.c b/gtk/gtkswitch.c
+index 25897d5..3d16f16 100644
+--- a/gtk/gtkswitch.c
++++ b/gtk/gtkswitch.c
+@@ -1102,10 +1102,10 @@ gtk_switch_set_active (GtkSwitch *sw,
+       else
+         priv->handle_x = 0;
+ 
+-      g_object_notify_by_pspec (G_OBJECT (sw), switch_props[PROP_ACTIVE]);
+-
+       g_signal_emit (sw, signals[STATE_SET], 0, is_active, &handled);
+ 
++      g_object_notify_by_pspec (G_OBJECT (sw), switch_props[PROP_ACTIVE]);
++
+       accessible = gtk_widget_get_accessible (GTK_WIDGET (sw));
+       atk_object_notify_state_change (accessible, ATK_STATE_CHECKED, priv->is_active);
+ 
+-- 
+2.4.3
+

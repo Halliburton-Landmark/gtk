@@ -1,0 +1,129 @@
+From ac5ffd847b1a7e744d7922359c1639b795c28908 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Thu, 18 Dec 2014 23:20:43 -0500
+Subject: [PATCH 2/2] GtkApplication: Try to cope with ssh situations better
+
+Override the gtk-shell-shows-app-menu and gtk-shell-shows-menubar
+settings to FALSE, if we can detect that we are not on the same
+session bus as the xsettings provider that we got these settings
+from.
+
+We determine this by comparing the bus ID of 'our' session
+bus with the one reported in the Gtk/SessionBusId xsetting.
+If they are different, then it very likely that we are in an ssh
+situation where we see the forwarded X display, but not the
+session bus. The D-Bus based menu exporting will not work
+in this situation.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=671802
+---
+ gtk/gtkapplication-dbus.c | 59 +++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 54 insertions(+), 5 deletions(-)
+
+diff --git a/gtk/gtkapplication-dbus.c b/gtk/gtkapplication-dbus.c
+index 0c45447..2367002 100644
+--- a/gtk/gtkapplication-dbus.c
++++ b/gtk/gtkapplication-dbus.c
+@@ -111,11 +111,12 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
+   static gchar *client_id;
+   GError *error = NULL;
+   GVariant *res;
++  gboolean same_bus;
+ 
+   dbus->session = g_application_get_dbus_connection (G_APPLICATION (impl->application));
+ 
+   if (!dbus->session)
+-    return;
++    goto out;
+ 
+   dbus->application_id = g_application_get_application_id (G_APPLICATION (impl->application));
+   dbus->object_path = g_application_get_dbus_object_path (G_APPLICATION (impl->application));
+@@ -149,14 +150,14 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
+     {
+       g_warning ("Failed to get a session proxy: %s", error->message);
+       g_error_free (error);
+-      return;
++      goto out;
+     }
+ 
+   /* FIXME: should we reuse the D-Bus application id here ? */
+   dbus->app_id = g_strdup (g_get_prgname ());
+ 
+   if (!register_session)
+-    return;
++    goto out;
+ 
+   g_debug ("Registering client '%s' '%s'", dbus->app_id, client_id);
+ 
+@@ -173,7 +174,7 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
+       g_warning ("Failed to register client: %s", error->message);
+       g_error_free (error);
+       g_clear_object (&dbus->sm_proxy);
+-      return;
++      goto out;
+     }
+ 
+   g_variant_get (res, "(o)", &dbus->client_path);
+@@ -195,10 +196,58 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
+       g_clear_object (&dbus->sm_proxy);
+       g_free (dbus->client_path);
+       dbus->client_path = NULL;
+-      return;
++      goto out;
+     }
+ 
+   g_signal_connect (dbus->client_proxy, "g-signal", G_CALLBACK (client_proxy_signal), dbus);
++
++ out:
++  same_bus = FALSE;
++
++  if (dbus->session)
++    {
++      const gchar *id;
++      const gchar *id2;
++      GValue value = G_VALUE_INIT;
++
++      g_value_init (&value, G_TYPE_STRING);
++      gdk_screen_get_setting (gdk_screen_get_default (), "gtk-session-bus-id", &value);
++      id = g_value_get_string (&value);
++
++      if (id && id[0])
++        {
++          res = g_dbus_connection_call_sync (dbus->session,
++                                             "org.freedesktop.DBus",
++                                             "/org/freedesktop/DBus",
++                                             "org.freedesktop.DBus",
++                                             "GetId",
++                                             NULL,
++                                             NULL,
++                                             G_DBUS_CALL_FLAGS_NONE,
++                                             -1,
++                                             NULL,
++                                             NULL);
++          if (res)
++            {
++              g_variant_get (res, "(&s)", &id2);
++
++              if (g_strcmp0 (id, id2) == 0)
++                same_bus = TRUE;
++
++              g_variant_unref (res);
++            }
++        }
++      else
++        same_bus = TRUE;
++
++      g_value_unset (&value);
++    }
++
++  if (!same_bus)
++    g_object_set (gtk_settings_get_default (),
++                  "gtk-shell-shows-app-menu", FALSE,
++                  "gtk-shell-shows-menubar", FALSE,
++                  NULL);
+ }
+ 
+ static void
+-- 
+2.3.6
+

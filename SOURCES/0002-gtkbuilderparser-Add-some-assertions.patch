@@ -1,0 +1,35 @@
+From 9fb727d989c3224476b1f8ba435a2d8443f5b625 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Fri, 17 Jul 2015 15:52:22 -0400
+Subject: [PATCH 2/7] gtkbuilderparser: Add some assertions
+
+Add some assertions that things are non-NULL when we know they
+are, so that coverity gets it.
+---
+ gtk/gtkbuilderparser.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/gtk/gtkbuilderparser.c b/gtk/gtkbuilderparser.c
+index ad44011..f85389a 100644
+--- a/gtk/gtkbuilderparser.c
++++ b/gtk/gtkbuilderparser.c
+@@ -1216,6 +1216,8 @@ end_element (GMarkupParseContext *context,
+       PropertyInfo *prop_info = state_pop_info (data, PropertyInfo);
+       CommonInfo *info = state_peek_info (data, CommonInfo);
+ 
++      g_assert (info != NULL);
++
+       /* Normal properties */
+       if (strcmp (info->tag.name, "object") == 0 ||
+ 	  strcmp (info->tag.name, "template") == 0)
+@@ -1252,6 +1254,7 @@ end_element (GMarkupParseContext *context,
+     {
+       SignalInfo *signal_info = state_pop_info (data, SignalInfo);
+       ObjectInfo *object_info = (ObjectInfo*)state_peek_info (data, CommonInfo);
++      g_assert (object_info != NULL);
+       signal_info->object_name = g_strdup (object_info->id);
+       object_info->signals =
+         g_slist_prepend (object_info->signals, signal_info);
+-- 
+2.4.5
+

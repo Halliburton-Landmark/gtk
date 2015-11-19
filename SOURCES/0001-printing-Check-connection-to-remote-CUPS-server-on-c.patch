@@ -1,0 +1,91 @@
+From 24a399252e811ae8db5738156026590b30f2d228 Mon Sep 17 00:00:00 2001
+From: Marek Kasik <mkasik@redhat.com>
+Date: Fri, 11 Jul 2014 11:33:30 +0200
+Subject: [PATCH] printing: Check connection to remote CUPS server on correct
+ port
+
+Add parameter for specification of port to gtk_cups_connection_cups_new().
+Use default port returned by ippPort() if the given port is lower than 0.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=693738
+---
+ modules/printbackends/cups/gtkcupsutils.c        | 8 ++++++--
+ modules/printbackends/cups/gtkcupsutils.h        | 3 ++-
+ modules/printbackends/cups/gtkprintbackendcups.c | 8 +++++---
+ 3 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/modules/printbackends/cups/gtkcupsutils.c b/modules/printbackends/cups/gtkcupsutils.c
+index da3436e..54239ca 100644
+--- a/modules/printbackends/cups/gtkcupsutils.c
++++ b/modules/printbackends/cups/gtkcupsutils.c
+@@ -1522,14 +1522,18 @@ gtk_cups_result_get_error_string (GtkCupsResult *result)
+  * a socket for communication with a CUPS server 'server'.
+  */
+ GtkCupsConnectionTest *
+-gtk_cups_connection_test_new (const char *server)
++gtk_cups_connection_test_new (const char *server,
++                              const int   port)
+ {
+   GtkCupsConnectionTest *result = NULL;
+   gchar                 *port_str = NULL;
+ 
+   result = g_new (GtkCupsConnectionTest, 1);
+ 
+-  port_str = g_strdup_printf ("%d", ippPort ());
++  if (port >= 0)
++    port_str = g_strdup_printf ("%d", port);
++  else
++    port_str = g_strdup_printf ("%d", ippPort ());
+ 
+   if (server != NULL)
+     result->addrlist = httpAddrGetList (server, AF_UNSPEC, port_str);
+diff --git a/modules/printbackends/cups/gtkcupsutils.h b/modules/printbackends/cups/gtkcupsutils.h
+index 55186f5..500bb4f 100644
+--- a/modules/printbackends/cups/gtkcupsutils.h
++++ b/modules/printbackends/cups/gtkcupsutils.h
+@@ -187,7 +187,8 @@ GtkCupsErrorType        gtk_cups_result_get_error_type     (GtkCupsResult      *
+ int                     gtk_cups_result_get_error_status   (GtkCupsResult      *result);
+ int                     gtk_cups_result_get_error_code     (GtkCupsResult      *result);
+ const char            * gtk_cups_result_get_error_string   (GtkCupsResult      *result);
+-GtkCupsConnectionTest * gtk_cups_connection_test_new       (const char            *server);
++GtkCupsConnectionTest * gtk_cups_connection_test_new       (const char         *server,
++                                                            const int           port);
+ GtkCupsConnectionState  gtk_cups_connection_test_get_state (GtkCupsConnectionTest *test);
+ void                    gtk_cups_connection_test_free      (GtkCupsConnectionTest *test);
+ 
+diff --git a/modules/printbackends/cups/gtkprintbackendcups.c b/modules/printbackends/cups/gtkprintbackendcups.c
+index b9782c5..80e9fea 100644
+--- a/modules/printbackends/cups/gtkprintbackendcups.c
++++ b/modules/printbackends/cups/gtkprintbackendcups.c
+@@ -3528,7 +3528,7 @@ cups_get_printer_list (GtkPrintBackend *backend)
+   cups_backend = GTK_PRINT_BACKEND_CUPS (backend);
+ 
+   if (cups_backend->cups_connection_test == NULL)
+-    cups_backend->cups_connection_test = gtk_cups_connection_test_new (NULL);
++    cups_backend->cups_connection_test = gtk_cups_connection_test_new (NULL, -1);
+ 
+   if (cups_backend->list_printers_poll == 0)
+     {
+@@ -3931,7 +3931,7 @@ cups_get_default_printer (GtkPrintBackendCups *backend)
+   cups_backend = backend;
+ 
+   if (cups_backend->cups_connection_test == NULL)
+-    cups_backend->cups_connection_test = gtk_cups_connection_test_new (NULL);
++    cups_backend->cups_connection_test = gtk_cups_connection_test_new (NULL, -1);
+ 
+   if (cups_backend->default_printer_poll == 0)
+     {
+@@ -4073,7 +4073,9 @@ cups_printer_request_details (GtkPrinter *printer)
+         {
+           if (cups_printer->get_remote_ppd_poll == 0)
+             {
+-              cups_printer->remote_cups_connection_test = gtk_cups_connection_test_new (cups_printer->hostname);
++              cups_printer->remote_cups_connection_test =
++                gtk_cups_connection_test_new (cups_printer->hostname,
++                                              cups_printer->port);
+ 
+               if (cups_request_ppd (printer))
+                 {
+-- 
+2.4.0
+
