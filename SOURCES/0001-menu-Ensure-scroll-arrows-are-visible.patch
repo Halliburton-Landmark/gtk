@@ -1,0 +1,27 @@
+From fef9f29eea12230498c7ecc9fb729fd8655a27fd Mon Sep 17 00:00:00 2001
+From: Benjamin Otte <otte@redhat.com>
+Date: Tue, 28 Jun 2016 16:03:02 -0400
+Subject: [PATCH] menu: Ensure scroll arrows are visible
+
+This is a quickfix that ensures we rerun size allocation after computing
+the scrolling machinery.
+---
+ gtk/gtkmenu.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gtk/gtkmenu.c b/gtk/gtkmenu.c
+index 6862ca9..ad5574c 100644
+--- a/gtk/gtkmenu.c
++++ b/gtk/gtkmenu.c
+@@ -1724,6 +1724,8 @@ gtk_menu_popup_for_device (GtkMenu             *menu,
+       source_device && gdk_device_get_source (source_device) == GDK_SOURCE_TOUCHSCREEN)
+     gtk_menu_shell_select_first (menu_shell, TRUE);
+ 
++  gtk_widget_queue_resize (GTK_WIDGET (menu));
++
+   /* Once everything is set up correctly, map the toplevel */
+   gtk_widget_show (priv->toplevel);
+ 
+-- 
+2.7.4
+

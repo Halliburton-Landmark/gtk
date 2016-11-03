@@ -1,0 +1,11 @@
+diff -up gtk+-3.14.13/gtk/gtkwindow.c.toggle-warning gtk+-3.14.13/gtk/gtkwindow.c
+--- gtk+-3.14.13/gtk/gtkwindow.c.toggle-warning	2016-03-15 16:21:37.651097494 -0400
++++ gtk+-3.14.13/gtk/gtkwindow.c	2016-03-15 16:22:19.468799208 -0400
+@@ -1396,7 +1396,6 @@ gtk_window_titlebar_action (GtkWindow
+     gtk_window_do_popup (window, (GdkEventButton*) event);
+   else
+     {
+-      g_warning ("Unsupported titlebar action %s\n", action);
+       retval = FALSE;
+     }
+ 

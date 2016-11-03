@@ -16,7 +16,7 @@
 Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
 Name: gtk3
 Version: 3.14.13
-Release: 16%{?dist}
+Release: 20%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: http://www.gtk.org
@@ -49,6 +49,18 @@ Patch15: 0001-gtkdnd-Account-for-setting-a-same-icon-helper.patch
 Patch16: 0001-Avoid-g_set_object.patch
 Patch17: placessidebar-crash.patch
 Patch18: app-chooser-fixes.patch
+
+# avoid a warning
+Patch19: gtk3-toggle-warning.patch
+
+# translation updates
+Patch20: translations.patch
+
+#upstream fix for a rhythmbox problem
+Patch21: 0001-gtkmenusectionbox-remove-submenus-when-the-parent-it.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1025359
+Patch22: 0001-menu-Ensure-scroll-arrows-are-visible.patch
 
 BuildRequires: gnome-common autoconf automake intltool gettext
 BuildRequires: atk-devel >= %{atk_version}
@@ -185,6 +197,10 @@ widget toolkit.
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
 
 %build
 
@@ -357,6 +373,22 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/gtk-doc
 
 %changelog
+* Thu Jul  1 2016 Benjamin Otte <otte@redhat.com> 3.14.13-20
+- Make sure menus always scroll when too large
+Resolves: #1025359
+
+* Thu Jun 30 2016 Matthias Clasen <mclasen@redhat.com> 3.14.13-19
+- Fix a problem that causes critical warnings in rhythmbox
+Resolves: #1351643
+
+* Wed Jun 29 2016 Matthias Clasen <mclasen@redhat.com> 3.14.13-18
+- Update translations
+Resolves: #1304264
+
+* Tue Mar 15 2016 Matthias Clasen <mclasen@redhat.com> 3.14.13-17
+- Remove an unnecessary warning
+Related: #1257794
+
 * Wed Sep 23 2015 Ray Strode <rstrode@redhat.com> 3.14.13-16
 - Fix mispelling in previous patch
 Related: #1259292
