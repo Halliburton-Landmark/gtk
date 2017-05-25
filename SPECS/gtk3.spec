@@ -16,7 +16,7 @@
 Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
 Name: gtk3
 Version: 3.14.13
-Release: 20%{?dist}
+Release: 20%{?dist}.1
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: http://www.gtk.org
@@ -61,6 +61,8 @@ Patch21: 0001-gtkmenusectionbox-remove-submenus-when-the-parent-it.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1025359
 Patch22: 0001-menu-Ensure-scroll-arrows-are-visible.patch
+
+Patch23: 0001-window-enable-resize-handles-for-non-CSD-custom-titl.patch
 
 BuildRequires: gnome-common autoconf automake intltool gettext
 BuildRequires: atk-devel >= %{atk_version}
@@ -201,6 +203,7 @@ widget toolkit.
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+%patch23 -p1
 
 %build
 
@@ -373,6 +376,11 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_datadir}/gtk-doc
 
 %changelog
+* Wed Apr 12 2017 Ray Strode <rstrode@redhat.com> 3.14.13-20.1
+- Ensure motif and related windows get told to supply resize borders
+  for CSD decorated windows
+Resolves: #1416874
+
 * Thu Jul  1 2016 Benjamin Otte <otte@redhat.com> 3.14.13-20
 - Make sure menus always scroll when too large
 Resolves: #1025359

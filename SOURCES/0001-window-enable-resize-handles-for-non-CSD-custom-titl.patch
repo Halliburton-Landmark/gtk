@@ -1,0 +1,151 @@
+From b33c9d95679725565a1c8428af69437e8fc00cdf Mon Sep 17 00:00:00 2001
+From: Ray Strode <rstrode@redhat.com>
+Date: Wed, 5 Apr 2017 16:32:39 -0400
+Subject: [PATCH] window: enable resize handles for non-CSD custom titlebars
+
+If an an application has a custom titlebar, but the platform
+doesn't support client side decorations, GTK+ currently compromises
+by having the WM draw the border, and having the application draw
+the titlebar at the top of the client window.
+
+Unfortunately, GTK+ neglects to tell the window manager to make the
+window resizable in that corner case.
+
+This commit fixes that.
+---
+ gtk/gtkwindow.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtkwindow.c b/gtk/gtkwindow.c
+index a68ed94962..cf4f426bde 100644
+--- a/gtk/gtkwindow.c
++++ b/gtk/gtkwindow.c
+@@ -4051,61 +4051,61 @@ _gtk_window_titlebar_shows_app_menu (GtkWindow *window)
+  * On Windows, this function always works, since there’s no window manager
+  * policy involved.
+  * 
+  **/
+ void
+ gtk_window_set_decorated (GtkWindow *window,
+                           gboolean   setting)
+ {
+   GtkWindowPrivate *priv;
+   GdkWindow *gdk_window;
+ 
+   g_return_if_fail (GTK_IS_WINDOW (window));
+ 
+   priv = window->priv;
+ 
+   setting = setting != FALSE;
+ 
+   if (setting == priv->decorated)
+     return;
+ 
+   priv->decorated = setting;
+ 
+   gdk_window = gtk_widget_get_window (GTK_WIDGET (window));
+   if (gdk_window)
+     {
+       if (priv->decorated)
+         {
+           if (priv->client_decorated)
+             gdk_window_set_decorations (gdk_window, 0);
+           else if (priv->custom_title)
+-            gdk_window_set_decorations (gdk_window, GDK_DECOR_BORDER);
++            gdk_window_set_decorations (gdk_window, GDK_DECOR_BORDER | GDK_DECOR_RESIZEH);
+           else
+             gdk_window_set_decorations (gdk_window, GDK_DECOR_ALL);
+         }
+       else
+         gdk_window_set_decorations (gdk_window, 0);
+     }
+ 
+   update_window_buttons (window);
+   gtk_widget_queue_resize (GTK_WIDGET (window));
+ 
+   g_object_notify (G_OBJECT (window), "decorated");
+ }
+ 
+ /**
+  * gtk_window_get_decorated:
+  * @window: a #GtkWindow
+  *
+  * Returns whether the window has been set to have decorations
+  * such as a title bar via gtk_window_set_decorated().
+  *
+  * Returns: %TRUE if the window has been set to have decorations
+  **/
+ gboolean
+ gtk_window_get_decorated (GtkWindow *window)
+ {
+   g_return_val_if_fail (GTK_IS_WINDOW (window), TRUE);
+ 
+   return window->priv->decorated;
+ }
+ 
+@@ -6976,61 +6976,61 @@ gtk_window_realize (GtkWidget *widget)
+       };
+ 
+       attributes.wclass = GDK_INPUT_ONLY;
+       attributes.width = 1;
+       attributes.height = 1;
+       attributes.event_mask = GDK_BUTTON_PRESS_MASK;
+       attributes_mask = GDK_WA_CURSOR;
+ 
+       for (i = 0; i < 8; i++)
+         {
+           attributes.cursor = gdk_cursor_new (cursor_type[i]);
+           priv->border_window[i] = gdk_window_new (gdk_window, &attributes, attributes_mask);
+           g_object_unref (attributes.cursor);
+ 
+           gdk_window_show (priv->border_window[i]);
+           gtk_widget_register_window (widget, priv->border_window[i]);
+         }
+     }
+ 
+   if (priv->transient_parent &&
+       gtk_widget_get_realized (GTK_WIDGET (priv->transient_parent)))
+     gdk_window_set_transient_for (gdk_window,
+                                   gtk_widget_get_window (GTK_WIDGET (priv->transient_parent)));
+ 
+   if (priv->wm_role)
+     gdk_window_set_role (gdk_window, priv->wm_role);
+ 
+   if (!priv->decorated || priv->client_decorated)
+     gdk_window_set_decorations (gdk_window, 0);
+   else if (priv->custom_title)
+-    gdk_window_set_decorations (gdk_window, GDK_DECOR_BORDER);
++    gdk_window_set_decorations (gdk_window, GDK_DECOR_BORDER | GDK_DECOR_RESIZEH);
+ 
+   if (!priv->deletable)
+     gdk_window_set_functions (gdk_window, GDK_FUNC_ALL | GDK_FUNC_CLOSE);
+ 
+   if (gtk_window_get_skip_pager_hint (window))
+     gdk_window_set_skip_pager_hint (gdk_window, TRUE);
+ 
+   if (gtk_window_get_skip_taskbar_hint (window))
+     gdk_window_set_skip_taskbar_hint (gdk_window, TRUE);
+ 
+   if (gtk_window_get_accept_focus (window))
+     gdk_window_set_accept_focus (gdk_window, TRUE);
+   else
+     gdk_window_set_accept_focus (gdk_window, FALSE);
+ 
+   if (gtk_window_get_focus_on_map (window))
+     gdk_window_set_focus_on_map (gdk_window, TRUE);
+   else
+     gdk_window_set_focus_on_map (gdk_window, FALSE);
+ 
+   if (priv->modal)
+     gdk_window_set_modal_hint (gdk_window, TRUE);
+   else
+     gdk_window_set_modal_hint (gdk_window, FALSE);
+ 
+   if (priv->startup_id)
+     {
+ #ifdef GDK_WINDOWING_X11
+       if (GDK_IS_X11_WINDOW (gdk_window))
+         {
+-- 
+2.12.2
+
