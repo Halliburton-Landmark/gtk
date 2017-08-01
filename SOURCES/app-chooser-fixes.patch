@@ -1,7 +1,7 @@
-From c815f8ce277750699eeadd33f6ee0733589db3ce Mon Sep 17 00:00:00 2001
+From 775c174c07120760820d68e44402b9da547a0263 Mon Sep 17 00:00:00 2001
 From: Ray Strode <rstrode@redhat.com>
 Date: Wed, 23 Sep 2015 09:29:11 -0400
-Subject: [PATCH 1/3] GtkAppChooserButton: Hide compat desktop entries
+Subject: [PATCH] GtkAppChooserButton: Hide compat desktop entries
 
 RHEL maintains some NoDisplay compat desktop entries to keep old user
 mime associations working in the 7.1 to 7.2 rebase.
@@ -22,10 +22,10 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1259292
  1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/gtk/gtkappchooserbutton.c b/gtk/gtkappchooserbutton.c
-index ea4bd90..d129786 100644
+index c0af584..78df7f1 100644
 --- a/gtk/gtkappchooserbutton.c
 +++ b/gtk/gtkappchooserbutton.c
-@@ -34,60 +34,61 @@
+@@ -33,60 +33,61 @@
   *
   * The list of applications shown in a #GtkAppChooserButton includes
   * the recommended applications for the given content type. When
@@ -59,10 +59,12 @@ index ea4bd90..d129786 100644
 +#include "gio/gdesktopappinfo.h"
  
  enum {
-   PROP_CONTENT_TYPE = 1,
-   PROP_SHOW_DIALOG_ITEM,
+   PROP_SHOW_DIALOG_ITEM = 1,
    PROP_SHOW_DEFAULT_ITEM,
-   PROP_HEADING
+   PROP_HEADING,
+   NUM_PROPERTIES,
+ 
+   PROP_CONTENT_TYPE = NUM_PROPERTIES
  };
  
  enum {
@@ -82,12 +84,10 @@ index ea4bd90..d129786 100644
  
  #define CUSTOM_ITEM_OTHER_APP "gtk-internal-item-other-app"
  
- static void app_chooser_iface_init (GtkAppChooserIface *iface);
+ static void app_chooser_iface_init  (GtkAppChooserIface *iface);
  
  static void real_insert_custom_item (GtkAppChooserButton *self,
-                                      const gchar *name,
-                                      const gchar *label,
-@@ -308,78 +309,81 @@ insert_one_application (GtkAppChooserButton *self,
+@@ -312,78 +313,81 @@ insert_one_application (GtkAppChooserButton *self,
  
    gtk_list_store_set (self->priv->store, iter,
                        COLUMN_APP_INFO, app,
@@ -170,176 +170,6 @@ index ea4bd90..d129786 100644
  {
    GtkCellRenderer *cell;
    GtkCellArea *area;
--- 
-2.5.0
-
-
-From 6fc9af4caea6e4dd86b2808b2fd01b8d7b624100 Mon Sep 17 00:00:00 2001
-From: Matthias Clasen <mclasen@redhat.com>
-Date: Tue, 22 Sep 2015 16:07:13 -0400
-Subject: [PATCH 2/3] app chooser widget: protect against show_all
-
-The visibility of the 'no apps' placeholder is managed by
-the dialog, it should not be affected by gtk_widget_show_all.
-
-https://bugzilla.gnome.org/show_bug.cgi?id=748080
----
- gtk/resources/ui/gtkappchooserwidget.ui | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/gtk/resources/ui/gtkappchooserwidget.ui b/gtk/resources/ui/gtkappchooserwidget.ui
-index 4b23628..3cc65f7 100644
---- a/gtk/resources/ui/gtkappchooserwidget.ui
-+++ b/gtk/resources/ui/gtkappchooserwidget.ui
-@@ -71,60 +71,61 @@
-                         <attribute name="visible">6</attribute>
-                         <attribute name="markup">7</attribute>
-                       </attributes>
-                     </child>
-                     <child>
-                       <object class="GtkCellRendererText" id="secondary_padding"/>
-                     </child>
-                     <child>
-                       <object class="GtkCellRendererPixbuf" id="app_icon"/>
-                       <attributes>
-                         <attribute name="gicon">1</attribute>
-                       </attributes>
-                     </child>
-                     <child>
-                       <object class="GtkCellRendererText" id="app_name">
-                         <property name="ellipsize">end</property>
-                       </object>
-                       <attributes>
-                         <attribute name="markup">3</attribute>
-                       </attributes>
-                     </child>
-                   </object>
-                 </child>
-               </object>
-             </child>
-           </object>
-         </child>
-         <child type="overlay">
-           <object class="GtkBox" id="no_apps">
-             <property name="orientation">vertical</property>
-+            <property name="no-show-all">True</property>
-             <property name="halign">center</property>
-             <property name="valign">center</property>
-             <child>
-               <object class="GtkImage">
-                 <property name="visible">True</property>
-                 <property name="icon-name">gnome-software-symbolic</property>
-                 <property name="pixel-size">48</property>
-                 <property name="margin">12</property>
-                 <style>
-                   <class name="dim-label"/>
-                 </style>
-               </object>
-             </child>
-             <child>
-               <object class="GtkLabel" id="no_apps_label">
-                 <property name="visible">True</property>
-                 <property name="label" translatable="yes">No applications found.</property>
-                 <property name="halign">center</property>
-                 <property name="valign">center</property>
-                 <attributes>
-                   <attribute name="scale" value="1.2"/>
-                 </attributes>
-                 <style>
-                   <class name="dim-label"/>
-                 </style>
-               </object>
-             </child>
-           </object>
-         </child>
-       </object>
--- 
-2.5.0
-
-
-From 0bd4176f0cd7e5febd6434e94a822dc9626f6d88 Mon Sep 17 00:00:00 2001
-From: Matthias Clasen <mclasen@redhat.com>
-Date: Tue, 22 Sep 2015 15:14:00 -0400
-Subject: [PATCH 3/3] app chooser: Avoid duplicates
-
-At the time we populate the model "initially" in constructed(),
-it has already been filled and cleared a couple of times (we do
-that every time one of the construct properties gets set). So
-we can't assume that the model is empty, and have to clear it
-first. Otherwise, we add duplicates to the list.
-
-https://bugzilla.gnome.org/show_bug.cgi?id=748080
----
- gtk/gtkappchooserwidget.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/gtk/gtkappchooserwidget.c b/gtk/gtkappchooserwidget.c
-index 01f9a4b..5c90460 100644
---- a/gtk/gtkappchooserwidget.c
-+++ b/gtk/gtkappchooserwidget.c
-@@ -786,61 +786,61 @@ gtk_app_chooser_widget_real_add_items (GtkAppChooserWidget *self)
-                                                         FALSE,
-                                                         FALSE,
-                                                         all_applications, exclude_apps);
-     }
- 
-   if (!apps_added)
-     update_no_applications_label (self);
- 
-   gtk_widget_set_visible (self->priv->no_apps, !apps_added);
- 
-   gtk_app_chooser_widget_select_first (self);
- 
-   if (default_app != NULL)
-     g_object_unref (default_app);
- 
-   g_list_free_full (all_applications, g_object_unref);
-   g_list_free_full (recommended_apps, g_object_unref);
-   g_list_free_full (fallback_apps, g_object_unref);
-   g_list_free (exclude_apps);
- }
- 
- static void
- gtk_app_chooser_widget_initialize_items (GtkAppChooserWidget *self)
- {
-   /* initial padding */
-   g_object_set (self->priv->padding_renderer,
-                 "xpad", self->priv->show_all ? 0 : 6,
-                 NULL);
- 
-   /* populate the widget */
--  gtk_app_chooser_widget_real_add_items (self);
-+  gtk_app_chooser_refresh (GTK_APP_CHOOSER (self));
- }
- 
- static void
- app_info_changed (GAppInfoMonitor     *monitor,
-                   GtkAppChooserWidget *self)
- {
-   gtk_app_chooser_refresh (GTK_APP_CHOOSER (self));
- }
- 
- static void
- gtk_app_chooser_widget_set_property (GObject      *object,
-                                      guint         property_id,
-                                      const GValue *value,
-                                      GParamSpec   *pspec)
- {
-   GtkAppChooserWidget *self = GTK_APP_CHOOSER_WIDGET (object);
- 
-   switch (property_id)
-     {
-     case PROP_CONTENT_TYPE:
-       self->priv->content_type = g_value_dup_string (value);
-       break;
-     case PROP_SHOW_DEFAULT:
-       gtk_app_chooser_widget_set_show_default (self, g_value_get_boolean (value));
-       break;
-     case PROP_SHOW_RECOMMENDED:
-       gtk_app_chooser_widget_set_show_recommended (self, g_value_get_boolean (value));
-       break;
-     case PROP_SHOW_FALLBACK:
-       gtk_app_chooser_widget_set_show_fallback (self, g_value_get_boolean (value));
 -- 
 2.5.0
 

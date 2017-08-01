@@ -3,125 +3,102 @@
 %global with_broadway 1
 %endif
 
-%global glib2_version 2.41.2
-%global pango_version 1.36.7
+%global glib2_version 2.49.4
+%global pango_version 1.37.3
+%global atk_version 2.15.1
+%global cairo_version 1.14.0
 %global gdk_pixbuf_version 2.30.0
-%global atk_version 2.12.0
-%global cairo_version 1.13.1
-%global xrandr_version 1.2.99.4-2
-%global gobject_introspection_version 1.36.0-2
+%global xrandr_version 1.5.0
+%global wayland_version 1.9.91
+%global wayland_protocols_version 1.7
+%global epoxy_version 1.0
 
 %global bin_version 3.0.0
 
-Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
+%global _changelog_trimtime %(date +%s -d "1 year ago")
+
 Name: gtk3
-Version: 3.14.13
-Release: 20%{?dist}.1
+Version: 3.22.10
+Release: 4%{?dist}
+Summary: The GIMP ToolKit (GTK+), a library for creating GUIs for X
+
 License: LGPLv2+
-Group: System Environment/Libraries
 URL: http://www.gtk.org
-#VCS: git:git://git.gnome.org/gtk+
-Source: http://download.gnome.org/sources/gtk+/3.14/gtk+-%{version}.tar.xz
-Source1: settings.ini
+Source0: http://download.gnome.org/sources/gtk+/3.22/gtk+-%{version}.tar.xz
+source1: ja.po
 
-# upstream fixes
-Patch0: 0001-Add-an-XSetting-for-the-session-bus-ID.patch
-Patch1: 0002-GtkApplication-Try-to-cope-with-ssh-situations-bette.patch
-Patch2: 0001-printing-Check-connection-to-remote-CUPS-server-on-c.patch
-# updated translations
-Patch3: gtk3-translations-3.14.patch
-Patch4: disarm-deprecations.patch
-Patch5: 0001-GtkMenuButton-Submit-to-action.patch
-Patch6: 0001-GtkSwitch-fix-a-reentry-issue.patch
-Patch7: 0001-GdkDisplayX11-Properly-translate-server-timestamps-f.patch
-
-# coverity fixes
-Patch8: 0001-gtk-demo-Check-a-return-value.patch
-Patch9: 0002-gtkbuilderparser-Add-some-assertions.patch
-Patch10: 0003-gtkicontheme-Check-a-return-value.patch
-Patch11: 0004-inspector-Annotate-a-call-whose-return-value-we-don-.patch
-Patch12: 0005-inspector-Check-a-return-value.patch
-Patch13: 0006-cups-Annotate-a-call-whose-return-value-we-don-t-car.patch
-Patch14: 0007-testdialog-Error-out-if-templates-are-missing.patch
-
-# upstream crash fixes
-Patch15: 0001-gtkdnd-Account-for-setting-a-same-icon-helper.patch
-Patch16: 0001-Avoid-g_set_object.patch
-Patch17: placessidebar-crash.patch
+# Downstream fix to filter out X-RHEL-AliasOf
+# https://bugzilla.redhat.com/show_bug.cgi?id=1259292
 Patch18: app-chooser-fixes.patch
 
-# avoid a warning
-Patch19: gtk3-toggle-warning.patch
-
-# translation updates
-Patch20: translations.patch
-
-#upstream fix for a rhythmbox problem
-Patch21: 0001-gtkmenusectionbox-remove-submenus-when-the-parent-it.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1025359
-Patch22: 0001-menu-Ensure-scroll-arrows-are-visible.patch
-
-Patch23: 0001-window-enable-resize-handles-for-non-CSD-custom-titl.patch
-
-BuildRequires: gnome-common autoconf automake intltool gettext
-BuildRequires: atk-devel >= %{atk_version}
-BuildRequires: at-spi2-atk-devel
-BuildRequires: glib2-devel >= %{glib2_version}
-BuildRequires: cairo-devel >= %{cairo_version}
-BuildRequires: cairo-gobject-devel >= %{cairo_version}
-BuildRequires: pango-devel >= %{pango_version}
-BuildRequires: gdk-pixbuf2-devel >= %{gdk_pixbuf_version}
-BuildRequires: gtk2-devel
-BuildRequires: libXi-devel
+BuildRequires: pkgconfig(atk) >= %{atk_version}
+BuildRequires: pkgconfig(atk-bridge-2.0)
+BuildRequires: pkgconfig(glib-2.0) >= %{glib2_version}
+BuildRequires: pkgconfig(gobject-introspection-1.0)
+BuildRequires: pkgconfig(cairo) >= %{cairo_version}
+BuildRequires: pkgconfig(cairo-gobject) >= %{cairo_version}
+BuildRequires: pkgconfig(pango) >= %{pango_version}
+BuildRequires: pkgconfig(gdk-pixbuf-2.0) >= %{gdk_pixbuf_version}
+BuildRequires: pkgconfig(xi)
+BuildRequires: pkgconfig(xrandr) >= %{xrandr_version}
+BuildRequires: pkgconfig(xrender)
+BuildRequires: pkgconfig(xrender)
+BuildRequires: pkgconfig(xcursor)
+BuildRequires: pkgconfig(xfixes)
+BuildRequires: pkgconfig(xinerama)
+BuildRequires: pkgconfig(xcomposite)
+BuildRequires: pkgconfig(xdamage)
+BuildRequires: pkgconfig(epoxy)
 BuildRequires: gettext
 BuildRequires: gtk-doc
 BuildRequires: cups-devel
-BuildRequires: rest-devel
-BuildRequires: json-glib-devel
-BuildRequires: libXrandr-devel >= %{xrandr_version}
-BuildRequires: libXrender-devel
-BuildRequires: libXcursor-devel
-BuildRequires: libXfixes-devel
-BuildRequires: libXinerama-devel
-BuildRequires: libXcomposite-devel
-BuildRequires: libXdamage-devel
-BuildRequires: libXi-devel
-BuildRequires: gobject-introspection-devel >= %{gobject_introspection_version}
-BuildRequires: colord-devel
-BuildRequires: avahi-gobject-devel
+BuildRequires: pkgconfig(rest-0.7)
+BuildRequires: pkgconfig(json-glib-1.0)
+BuildRequires: pkgconfig(colord)
+BuildRequires: pkgconfig(avahi-gobject)
 BuildRequires: desktop-file-utils
 %if 0%{?with_wayland}
-BuildRequires: libwayland-client-devel
-BuildRequires: libwayland-cursor-devel
-BuildRequires: libxkbcommon-devel
+BuildRequires: pkgconfig(wayland-client) >= %{wayland_version}
+BuildRequires: pkgconfig(wayland-cursor) >= %{wayland_version}
+BuildRequires: pkgconfig(wayland-egl) >= %{wayland_version}
+BuildRequires: pkgconfig(wayland-protocols) >= %{wayland_protocols_version}
+BuildRequires: pkgconfig(xkbcommon)
 %endif
 
 # standard icons
 Requires: adwaita-icon-theme
-
 # required for icon theme apis to work
 Requires: hicolor-icon-theme
+# split out in a subpackage
+Requires: gtk-update-icon-cache
 
-# We need to prereq these so we can run gtk-query-immodules-3.0
-Requires(post): glib2 >= %{glib2_version}
-Requires(post): atk >= %{atk_version}
-Requires(post): pango >= %{pango_version}
-Requires: libXrandr >= %{xrandr_version}
-
+Requires: atk%{?_isa} >= %{atk_version}
 Requires: cairo%{?_isa} >= %{cairo_version}
 Requires: cairo-gobject%{?_isa} >= %{cairo_version}
+Requires: glib2%{?_isa} >= %{glib2_version}
+Requires: libepoxy%{?_isa} >= %{epoxy_version}
 Requires: libXrandr%{?_isa} >= %{xrandr_version}
+Requires: pango%{?_isa} >= %{pango_version}
 %if 0%{?with_wayland}
 Requires: libwayland-client%{?_isa} >= %{wayland_version}
 Requires: libwayland-cursor%{?_isa} >= %{wayland_version}
 %endif
 
+# make sure we have a reasonable gsettings backend
+%if 0%{?fedora}
+Recommends: dconf%{?_isa}
+%else
+Requires: dconf%{?_isa}
+%endif
+
+# gtk3 itself includes the Adwaita theme now
+Obsoletes: adwaita-gtk3-theme < 3.13.3
+Provides: adwaita-gtk3-theme = %{version}-%{release}
+
 # gtk3 no longer provides the GtkThemeEngine interface used there
 Obsoletes: gtk3-engines <= 2.91.5-5.fc15
-
-Obsoletes: adwaita-gtk3-theme < 3.13.3
-Provides: adwaita-gtk3-theme = 3.13.4
+Obsoletes: gtk-solidity-engine < 0.4.1-9
+Obsoletes: oxygen-gtk3 < 2:1.4.1
 
 %description
 GTK+ is a multi-platform toolkit for creating graphical user
@@ -131,9 +108,19 @@ suites.
 
 This package contains version 3 of GTK+.
 
+%package -n gtk-update-icon-cache
+Summary: Icon theme caching utility
+# gtk-update-icon-cache used to be shipped in the gtk2 package
+Conflicts: gtk2 < 2.24.29
+
+%description -n gtk-update-icon-cache
+GTK+ can use the cache files created by gtk-update-icon-cache to avoid a lot of
+system call and disk seek overhead when the application starts. Since the
+format of the cache files allows them to be mmap()ed shared between multiple
+applications, the overall memory consumption is reduced as well.
+
 %package immodules
 Summary: Input methods for GTK+
-Group: System Environment/Libraries
 Requires: gtk3%{?_isa} = %{version}-%{release}
 # for im-cedilla.conf
 Requires: gtk2-immodules%{?_isa}
@@ -144,7 +131,6 @@ are shipped as part of GTK+ 3.
 
 %package immodule-xim
 Summary: XIM support for GTK+
-Group: System Environment/Libraries
 Requires: gtk3%{?_isa} = %{version}-%{release}
 
 %description immodule-xim
@@ -152,15 +138,7 @@ The gtk3-immodule-xim package contains XIM support for GTK+ 3.
 
 %package devel
 Summary: Development files for GTK+
-Group: Development/Libraries
 Requires: gtk3%{?_isa} = %{version}-%{release}
-Requires: gdk-pixbuf2-devel
-Requires: libX11-devel, libXcursor-devel, libXinerama-devel
-Requires: libXext-devel, libXi-devel, libXrandr-devel
-Requires: libXfixes-devel, libXcomposite-devel
-# for /usr/share/aclocal
-Requires: automake
-
 Obsoletes: gtk3-engines-devel <= 2.91.5-5.fc15
 
 %description devel
@@ -171,46 +149,30 @@ gtk3-devel-docs package.
 
 %package devel-docs
 Summary: Developer documentation for GTK+
-Group: Development/Libraries
 Requires: gtk3 = %{version}-%{release}
 
 %description devel-docs
 This package contains developer documentation for version 3 of the GTK+
 widget toolkit.
 
+%package tests
+Summary: Tests for the %{name} package
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description tests
+The %{name}-tests package contains tests that can be used to verify
+the functionality of the installed %{name} package.
+
 %prep
 %setup -q -n gtk+-%{version}
-%patch0 -p1 -b .ssh-xsetting
-%patch1 -p1 -b .ssh-appmenu
-%patch2 -p1 -b .cups-port
-%patch3 -p1 -b .translations
-%patch4 -p1 -b .deprecations
-%patch5 -p1 -b .menubutton
-%patch6 -p1 -b .switch
-%patch7 -p1 -b .ssh
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
 %patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
-%patch23 -p1
+
+cp %{SOURCE1} po/
 
 %build
-
 export CFLAGS='-fno-strict-aliasing %optflags'
 (if ! test -x configure; then NOCONFIGURE=1 ./autogen.sh; CONFIGFLAGS=--enable-gtk-doc; fi;
-%configure $CONFIGFLAGS \
-        --enable-gtk2-dependency \
+ %configure $CONFIGFLAGS \
         --enable-xkb \
         --enable-xinerama \
         --enable-xrandr \
@@ -225,6 +187,7 @@ export CFLAGS='-fno-strict-aliasing %optflags'
         --enable-broadway-backend \
 %endif
         --enable-colord \
+        --enable-installed-tests
 )
 
 # fight unused direct deps
@@ -232,14 +195,8 @@ sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
 
 make %{?_smp_mflags}
 
-%check
-for f in %{buildroot}%{_datadir}/applications/*.desktop; do
-  desktop-file-validate $f
-done
-
 %install
-make install DESTDIR=$RPM_BUILD_ROOT        \
-             RUN_QUERY_IMMODULES_TEST=false
+%make_install RUN_QUERY_IMMODULES_TEST=false
 
 %find_lang gtk30
 %find_lang gtk30-properties
@@ -251,8 +208,7 @@ make install DESTDIR=$RPM_BUILD_ROOT        \
 echo ".so man1/gtk-query-immodules-3.0.1" > $RPM_BUILD_ROOT%{_mandir}/man1/gtk-query-immodules-3.0-%{__isa_bits}.1
 
 # Remove unpackaged files
-rm $RPM_BUILD_ROOT%{_libdir}/*.la
-rm $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/%{bin_version}/*/*.la
+find $RPM_BUILD_ROOT -name '*.la' -delete
 
 %if !0%{?with_broadway}
 rm $RPM_BUILD_ROOT%{_mandir}/man1/broadwayd.1*
@@ -265,8 +221,8 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/modules
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/immodules
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/gtk-3.0/%{bin_version}/theming-engines
 
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/gtk-3.0
-cp $RPM_SOURCE_DIR/settings.ini $RPM_BUILD_ROOT%{_datadir}/gtk-3.0/settings.ini
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 
 %post
 /sbin/ldconfig
@@ -274,6 +230,7 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 glib-compile-schemas %{_datadir}/glib-2.0/schemas &> /dev/null || :
 
 %post devel
+touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
 glib-compile-schemas %{_datadir}/glib-2.0/schemas &> /dev/null || :
 
 %post immodules
@@ -290,6 +247,10 @@ fi
 glib-compile-schemas %{_datadir}/glib-2.0/schemas &> /dev/null || :
 
 %postun devel
+if [ $1 -eq 0 ] ; then
+    touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+fi
 glib-compile-schemas %{_datadir}/glib-2.0/schemas &> /dev/null || :
 
 %postun immodules
@@ -298,8 +259,12 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %postun immodule-xim
 gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 
+%posttrans devel
+gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+
 %files -f gtk30.lang
-%doc AUTHORS COPYING NEWS README
+%license COPYING
+%doc AUTHORS NEWS README
 %{_bindir}/gtk-query-immodules-3.0*
 %{_bindir}/gtk-launch
 %{_libdir}/libgtk-3.so.*
@@ -307,7 +272,7 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_libdir}/libgailutil-3.so.*
 %dir %{_libdir}/gtk-3.0
 %dir %{_libdir}/gtk-3.0/%{bin_version}
-%{_datadir}/gtk-3.0
+%dir %{_datadir}/gtk-3.0
 %{_libdir}/gtk-3.0/%{bin_version}/theming-engines
 %dir %{_libdir}/gtk-3.0/%{bin_version}/immodules
 %{_libdir}/gtk-3.0/%{bin_version}/printbackends
@@ -318,8 +283,7 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_libdir}/girepository-1.0
 %ghost %{_libdir}/gtk-3.0/%{bin_version}/immodules.cache
 %{_mandir}/man1/gtk-query-immodules-3.0*
-%{_mandir}/man1/gtk-launch.1.gz
-%exclude %{_mandir}/man1/gtk-update-icon-cache.1.gz
+%{_mandir}/man1/gtk-launch.1*
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.FileChooser.gschema.xml
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.ColorChooser.gschema.xml
 %{_datadir}/glib-2.0/schemas/org.gtk.Settings.Debug.gschema.xml
@@ -328,6 +292,11 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_bindir}/broadwayd
 %{_mandir}/man1/broadwayd.1*
 %endif
+
+%files -n gtk-update-icon-cache
+%license COPYING
+%{_bindir}/gtk-update-icon-cache
+%{_mandir}/man1/gtk-update-icon-cache.1*
 
 %files immodules
 %{_libdir}/gtk-3.0/%{bin_version}/immodules/im-cedilla.so
@@ -355,14 +324,19 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_libdir}/pkgconfig/*
 %{_bindir}/gtk3-demo
 %{_bindir}/gtk3-icon-browser
+%{_bindir}/gtk-builder-tool
 %{_bindir}/gtk-encode-symbolic-svg
+%{_bindir}/gtk-query-settings
 %{_datadir}/applications/gtk3-demo.desktop
 %{_datadir}/applications/gtk3-icon-browser.desktop
 %{_datadir}/applications/gtk3-widget-factory.desktop
 %{_datadir}/icons/hicolor/*/apps/gtk3-demo.png
+%{_datadir}/icons/hicolor/*/apps/gtk3-demo-symbolic.symbolic.png
 %{_datadir}/icons/hicolor/*/apps/gtk3-widget-factory.png
+%{_datadir}/icons/hicolor/*/apps/gtk3-widget-factory-symbolic.symbolic.png
 %{_bindir}/gtk3-demo-application
 %{_bindir}/gtk3-widget-factory
+%{_datadir}/gettext/
 %{_datadir}/gtk-3.0/gtkbuilder.rng
 %{_datadir}/gir-1.0
 %{_datadir}/glib-2.0/schemas/org.gtk.Demo.gschema.xml
@@ -370,16 +344,49 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache
 %{_mandir}/man1/gtk3-demo-application.1*
 %{_mandir}/man1/gtk3-icon-browser.1*
 %{_mandir}/man1/gtk3-widget-factory.1*
+%{_mandir}/man1/gtk-builder-tool.1*
 %{_mandir}/man1/gtk-encode-symbolic-svg.1*
+%{_mandir}/man1/gtk-query-settings.1*
 
 %files devel-docs
 %{_datadir}/gtk-doc
 
+%files tests
+%{_libexecdir}/installed-tests/gtk+
+%{_datadir}/installed-tests
+
 %changelog
-* Wed Apr 12 2017 Ray Strode <rstrode@redhat.com> 3.14.13-20.1
-- Ensure motif and related windows get told to supply resize borders
-  for CSD decorated windows
-Resolves: #1416874
+* Tue May 30 2017 Matthias Clasen <mclasen@redhat.com> - 3.22.10-4
+- Update Japanese translations
+- Resolves: #1449636
+
+* Thu Apr 20 2017 Kalev Lember <klember@redhat.com> - 3.22.10-3
+- Really remove all libtool .la files
+- Resolves: #1386980
+
+* Thu Apr 20 2017 Kalev Lember <klember@redhat.com> - 3.22.10-2
+- Try harder to remove all libtool .la files
+- Resolves: #1386980
+
+* Tue Mar 14 2017 Kalev Lember <klember@redhat.com> - 3.22.10-1
+- Update to 3.22.10
+- Resolves: #1386980
+
+* Tue Feb 28 2017 Kalev Lember <klember@redhat.com> - 3.22.9-1
+- Update to 3.22.9
+- Resolves: #1386980
+
+* Tue Feb 14 2017 Kalev Lember <klember@redhat.com> - 3.22.8-2
+- Build with xrandr 1.5.0
+- Resolves: #1386980
+
+* Mon Feb 13 2017 Kalev Lember <klember@redhat.com> - 3.22.8-1
+- Update to 3.22.8
+- Resolves: #1386980
+
+* Mon Jan 16 2017 Kalev Lember <klember@redhat.com> - 3.22.7-1
+- Update to 3.22.7
+- Resolves: #1386980
 
 * Thu Jul  1 2016 Benjamin Otte <otte@redhat.com> 3.14.13-20
 - Make sure menus always scroll when too large
