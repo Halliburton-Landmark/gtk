@@ -1,0 +1,43 @@
+From e08c019f6c01a797c3eef59d900fbe09fac9ddaf Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jonas=20=C3=85dahl?= <jadahl@gmail.com>
+Date: Wed, 7 Aug 2019 19:17:44 +0200
+Subject: [PATCH] gtk/icon-theme: Handle lack of SVG loader gracefully
+
+When loading a SVG icon from a gresource file only containing SVG icons,
+but without having a SVG loader available in gdk-pixbuf, we would crash
+when trying to eventually load the resource. Fix this by gracefully
+handling this by simply failing to load the icon, while the first time
+it happens, log a warning.
+
+https://gitlab.gnome.org/GNOME/gtk/issues/2084
+---
+ gtk/gtkicontheme.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/gtk/gtkicontheme.c b/gtk/gtkicontheme.c
+index 65c64b38e3..e5323defe8 100644
+--- a/gtk/gtkicontheme.c
++++ b/gtk/gtkicontheme.c
+@@ -1806,6 +1806,19 @@ real_choose_icon (GtkIconTheme       *icon_theme,
+         icon_info->filename = g_strdup (unthemed_icon->svg_filename);
+       else if (unthemed_icon->no_svg_filename)
+         icon_info->filename = g_strdup (unthemed_icon->no_svg_filename);
++      else
++        {
++          static gboolean warned_once = FALSE;
++
++          if (!warned_once)
++            {
++              g_warning ("Tried to load SVG only icon without SVG support");
++              warned_once = TRUE;
++            }
++
++          g_clear_object (&icon_info);
++          goto out;
++        }
+ 
+       if (unthemed_icon->is_resource)
+         {
+-- 
+2.21.0
+
