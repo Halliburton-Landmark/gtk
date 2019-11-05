@@ -22,7 +22,7 @@
 
 Name: gtk3
 Version: 3.22.30
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: GTK+ graphical user interface library
 
 License: LGPLv2+
@@ -32,6 +32,8 @@ Source0: http://download.gnome.org/sources/gtk+/3.22/gtk+-%{version}.tar.xz
 # rhbz#1656447 / https://gitlab.gnome.org/GNOME/gtk/issues/1507
 Patch1: 0001-a11y-Check-X11-display-at-runtime.patch
 Patch2: 0001-a11y-Check-display-in-grab_cell_focus.patch
+# ehbz#1723836
+Patch3: 0001-a11y-Include-window-management-buttons-in-headerbar.patch
 
 BuildRequires: pkgconfig(atk) >= %{atk_version}
 BuildRequires: pkgconfig(atk-bridge-2.0)
@@ -173,6 +175,7 @@ the functionality of the installed %{name} package.
 %setup -q -n gtk+-%{version}
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
 export CFLAGS='-fno-strict-aliasing %optflags'
@@ -331,6 +334,9 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache &>/dev/null || :
 %{_datadir}/installed-tests
 
 %changelog
+* Thu Aug 15 2019 Benjamin Otte <otte@redhat.com> - 3.22.30-4
+- Include headerbar buttons in accessibility (rhbz#1723836)
+
 * Mon Jan 14 2019 Olivier Fourdan <ofourdan@redhat.com> - 3.22.30-3
 - Fix a couple of crashes when using the accessibility interface under
   Wayland (rhbz#1656447)
