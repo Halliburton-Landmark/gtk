@@ -9,7 +9,7 @@
 %global gdk_pixbuf_version 2.30.0
 %global xrandr_version 1.5.0
 %global wayland_version 1.9.91
-%global wayland_protocols_version 1.12
+%global wayland_protocols_version 1.10
 %global epoxy_version 1.0
 
 %global bin_version 3.0.0
@@ -21,7 +21,8 @@
 
 Name: gtk3
 Version: 3.22.30
-Release: 3%{?dist}
+#Release: 3%{?dist}
+Release: 3.el7
 Summary: GTK+ graphical user interface library
 
 License: LGPLv2+
@@ -31,13 +32,13 @@ Source1: ja.po
 
 # Downstream fix to filter out X-RHEL-AliasOf
 # https://bugzilla.redhat.com/show_bug.cgi?id=1259292
-Patch18: app-chooser-fixes.patch
+#Patch18: app-chooser-fixes.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1507113
-Patch19: 0001-Add-_gtk_printer_get_hard_margins_for_paper_size.patch
+#Patch19: 0001-Add-_gtk_printer_get_hard_margins_for_paper_size.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1571422
-Patch20: 0001-gdkseatdefault-Don-t-hide-GdkWindow-on-grab-failure.patch
+#Patch20: 0001-gdkseatdefault-Don-t-hide-GdkWindow-on-grab-failure.patch
 
 BuildRequires: pkgconfig(atk) >= %{atk_version}
 BuildRequires: pkgconfig(atk-bridge-2.0)
@@ -170,9 +171,9 @@ the functionality of the installed %{name} package.
 
 %prep
 %setup -q -n gtk+-%{version}
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
+#%patch18 -p1
+#%patch19 -p1
+#%patch20 -p1
 
 cp %{SOURCE1} po/
 
@@ -187,13 +188,12 @@ export CFLAGS='-fno-strict-aliasing %optflags'
         --enable-xcomposite \
         --enable-xdamage \
         --enable-x11-backend \
-        --enable-wayland-backend \
+        --disable-wayland-backend \
 %if 0%{?with_broadway}
         --enable-broadway-backend \
 %endif
         --enable-colord \
         --enable-installed-tests \
-        --with-included-immodules=wayland
 )
 
 # fight unused direct deps
