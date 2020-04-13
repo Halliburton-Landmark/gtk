@@ -1,0 +1,13 @@
+--- a/gtk/gtkdnd.c	
++++ a/gtk/gtkdnd.c	
+@@ -1353,6 +1353,10 @@ 
+                     "selection-get",
+                     G_CALLBACK (gtk_drag_selection_get),
+                     source_info);
++  g_signal_connect (context,
++                    "dnd-finished",
++                    G_CALLBACK (gtk_drag_context_dnd_finished_cb),
++                    source_info);
+   
+   dest_info->proxy_source = source_info;
+ }
