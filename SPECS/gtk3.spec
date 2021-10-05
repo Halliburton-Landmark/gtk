@@ -22,7 +22,7 @@
 
 Name: gtk3
 Version: 3.22.30
-Release: 6%{?dist}
+Release: 8%{?dist}
 Summary: GTK+ graphical user interface library
 
 License: LGPLv2+
@@ -40,6 +40,12 @@ Patch5: 0002-scrolled-window-respect-overlay-scrolling-setting.patch
 # Backported from upstream / https://gitlab.gnome.org/GNOME/gtk/merge_requests/1114
 # rhbz#1843486
 Patch6: 0001-gtklistbox-Only-unparent-header-rows-if-they-haven-t.patch
+# rhbz#1893196
+Patch7: 0001-entry-Only-offer-Emoji-if-requested.patch
+# rhbz#1873488
+Patch8: 0001-fix-nonoverlay-scrollbars.patch
+# Upstream patch to make reftests work in a vm
+Patch9: 0001-reftests-Enforce-default-settings.patch
 
 BuildRequires: pkgconfig(atk) >= %{atk_version}
 BuildRequires: pkgconfig(atk-bridge-2.0)
@@ -185,6 +191,9 @@ the functionality of the installed %{name} package.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
 
 %build
 export CFLAGS='-fno-strict-aliasing %optflags'
@@ -343,6 +352,13 @@ gtk-query-immodules-3.0-%{__isa_bits} --update-cache &>/dev/null || :
 %{_datadir}/installed-tests
 
 %changelog
+* Mon Jul 19 2021 Matthias Clasen <mclasen@redhat.com> - 3.22.30-8
+- Make reftests work in a vm
+
+* Fri Jul 16 2021 Matthias Clasen <mclasen@redhat.com> - 3.22.30-7
+- Only mention Emoji in context menus when requested (rhbz#1893196)
+- Fix warnings from non-overlay scrollbars (rhbz#1873488)
+
 * Wed Jun 03 2020 Kalev Lember <klember@redhat.com> - 3.22.30-6
 - Fix reuse of list box header widgets (#rhbz1843486)
 
