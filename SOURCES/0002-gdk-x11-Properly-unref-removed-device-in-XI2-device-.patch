@@ -1,0 +1,97 @@
+From 9ce66b9d059e3552ca6feea171aa8541fc1a5cb3 Mon Sep 17 00:00:00 2001
+From: Sebastian Keller <skeller@gnome.org>
+Date: Mon, 27 Jan 2020 01:02:29 +0100
+Subject: [PATCH 2/2] gdk/x11: Properly unref removed device in XI2 device
+ manager
+
+When a device is added, there are two references to it by the device
+manager, the initial one and the one used for the id_table. Removing a
+device only removed the reference added by the id_table resulting in the
+GdkDevice being leaked.
+
+https://gitlab.gnome.org/GNOME/gtk/merge_requests/1359
+---
+ gdk/x11/gdkdevicemanager-xi2.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/gdk/x11/gdkdevicemanager-xi2.c b/gdk/x11/gdkdevicemanager-xi2.c
+index 135a0512aa..00e64d2a84 100644
+--- a/gdk/x11/gdkdevicemanager-xi2.c
++++ b/gdk/x11/gdkdevicemanager-xi2.c
+@@ -616,68 +616,68 @@ add_device (GdkX11DeviceManagerXI2 *device_manager,
+ 
+   return device;
+ }
+ 
+ static void
+ detach_from_seat (GdkDevice *device)
+ {
+   GdkSeat *seat = gdk_device_get_seat (device);
+ 
+   if (!seat)
+     return;
+ 
+   if (gdk_device_get_device_type (device) == GDK_DEVICE_TYPE_MASTER)
+     gdk_display_remove_seat (gdk_device_get_display (device), seat);
+   else if (gdk_device_get_device_type (device) == GDK_DEVICE_TYPE_SLAVE)
+     gdk_seat_default_remove_slave (GDK_SEAT_DEFAULT (seat), device);
+ }
+ 
+ static void
+ remove_device (GdkX11DeviceManagerXI2 *device_manager,
+                gint                    device_id)
+ {
+   GdkDevice *device;
+ 
+   device = g_hash_table_lookup (device_manager->id_table,
+                                 GINT_TO_POINTER (device_id));
+ 
+   if (device)
+     {
+       detach_from_seat (device);
+-      device_manager->devices = g_list_remove (device_manager->devices, device);
+-
+-      g_signal_emit_by_name (device_manager, "device-removed", device);
+-
+-      g_object_run_dispose (G_OBJECT (device));
+ 
+       g_hash_table_remove (device_manager->id_table,
+                            GINT_TO_POINTER (device_id));
++
++      device_manager->devices = g_list_remove (device_manager->devices, device);
++      g_signal_emit_by_name (device_manager, "device-removed", device);
++      g_object_run_dispose (G_OBJECT (device));
++      g_object_unref (device);
+     }
+ }
+ 
+ static void
+ relate_masters (gpointer key,
+                 gpointer value,
+                 gpointer user_data)
+ {
+   GdkX11DeviceManagerXI2 *device_manager;
+   GdkDevice *device, *relative;
+ 
+   device_manager = user_data;
+   device = g_hash_table_lookup (device_manager->id_table, key);
+   relative = g_hash_table_lookup (device_manager->id_table, value);
+ 
+   _gdk_device_set_associated_device (device, relative);
+   _gdk_device_set_associated_device (relative, device);
+   ensure_seat_for_device_pair (device_manager, device, relative);
+ }
+ 
+ static void
+ relate_slaves (gpointer key,
+                gpointer value,
+                gpointer user_data)
+ {
+   GdkX11DeviceManagerXI2 *device_manager;
+   GdkDevice *slave, *master;
+   GdkSeat *seat;
+ 
+   device_manager = user_data;
+-- 
+2.25.1
+

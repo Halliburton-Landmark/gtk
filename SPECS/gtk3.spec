@@ -21,8 +21,8 @@
 
 Name: gtk3
 Version: 3.22.30
-#Release: 3%{?dist}
-Release: 3.el7
+#Release: 6%{?dist}
+Release: 6.el7
 Summary: GTK+ graphical user interface library
 
 License: LGPLv2+
@@ -39,6 +39,16 @@ Source1: ja.po
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1571422
 #Patch20: 0001-gdkseatdefault-Don-t-hide-GdkWindow-on-grab-failure.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1687745
+Patch21: 0001-gdk-x11-Clamp-window-size-both-when-creating-and-res.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1660642
+Patch22: 0001-gtk-icon-theme-Handle-lack-of-SVG-loader-gracefully.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1717000
+Patch23: 0001-gdkseatdefault-Unref-removed-slave-devices.patch
+Patch24: 0002-gdk-x11-Properly-unref-removed-device-in-XI2-device-.patch
 
 BuildRequires: pkgconfig(atk) >= %{atk_version}
 BuildRequires: pkgconfig(atk-bridge-2.0)
@@ -174,6 +184,10 @@ the functionality of the installed %{name} package.
 #%patch18 -p1
 #%patch19 -p1
 #%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
 
 cp %{SOURCE1} po/
 
@@ -363,6 +377,18 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_datadir}/installed-tests
 
 %changelog
+* Fri Oct 09 2020 Ray Strode <rstrode@redhat.com> - 3.22.30-6
+- Fix leak on VT switch
+  Resolves: #1882574
+
+* Wed Aug 07 2019 Jonas Ådahl <jadahl@redhat.com> - 3.22.30-5
+- Handle lack of SVG loader gracefully
+- Resolves: #1660642
+
+* Tue Aug 06 2019 Jonas Ådahl <jadahl@redhat.com> - 3.22.30-4
+- Clamp X11 window size both when creating and resizing
+- Resolves: #1687745
+
 * Thu Jun 21 2018 Benjamin Otte <otte@redhat.com> - 3.22.30-3
 - Don't hide GdkWindow on grab failure
 - Resolves: #1571422

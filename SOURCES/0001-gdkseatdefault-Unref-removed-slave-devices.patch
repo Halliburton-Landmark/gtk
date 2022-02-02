@@ -1,0 +1,91 @@
+From 4cef9f34713d20d7d87c4485a789816325ddb80a Mon Sep 17 00:00:00 2001
+From: Sebastian Keller <skeller@gnome.org>
+Date: Mon, 27 Jan 2020 00:59:56 +0100
+Subject: [PATCH 1/2] gdkseatdefault: Unref removed slave devices
+
+Adding a slave device adds a ref, but removing it does not unref it.
+
+https://gitlab.gnome.org/GNOME/gtk/merge_requests/1359
+---
+ gdk/gdkseatdefault.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gdk/gdkseatdefault.c b/gdk/gdkseatdefault.c
+index a83901a692..98ea6335fa 100644
+--- a/gdk/gdkseatdefault.c
++++ b/gdk/gdkseatdefault.c
+@@ -369,69 +369,71 @@ gdk_seat_default_add_slave (GdkSeatDefault *seat,
+                   capability, gdk_device_get_name (device));
+       return;
+     }
+ 
+   priv->capabilities |= capability;
+ 
+   gdk_seat_device_added (GDK_SEAT (seat), device);
+ }
+ 
+ void
+ gdk_seat_default_remove_slave (GdkSeatDefault *seat,
+                                GdkDevice      *device)
+ {
+   GdkSeatDefaultPrivate *priv;
+   GList *l;
+ 
+   g_return_if_fail (GDK_IS_SEAT_DEFAULT (seat));
+   g_return_if_fail (GDK_IS_DEVICE (device));
+ 
+   priv = gdk_seat_default_get_instance_private (seat);
+ 
+   if (g_list_find (priv->slave_pointers, device))
+     {
+       priv->slave_pointers = g_list_remove (priv->slave_pointers, device);
+ 
+       priv->capabilities &= ~(GDK_SEAT_CAPABILITY_POINTER | GDK_SEAT_CAPABILITY_TOUCH);
+       for (l = priv->slave_pointers; l; l = l->next)
+         priv->capabilities |= device_get_capability (GDK_DEVICE (l->data));
+ 
+       gdk_seat_device_removed (GDK_SEAT (seat), device);
++      g_object_unref (device);
+     }
+   else if (g_list_find (priv->slave_keyboards, device))
+     {
+       priv->slave_keyboards = g_list_remove (priv->slave_keyboards, device);
+ 
+       if (priv->slave_keyboards == NULL)
+         priv->capabilities &= ~GDK_SEAT_CAPABILITY_KEYBOARD;
+ 
+       gdk_seat_device_removed (GDK_SEAT (seat), device);
++      g_object_unref (device);
+     }
+ }
+ 
+ void
+ gdk_seat_default_add_tool (GdkSeatDefault *seat,
+                            GdkDeviceTool  *tool)
+ {
+   GdkSeatDefaultPrivate *priv;
+ 
+   g_return_if_fail (GDK_IS_SEAT_DEFAULT (seat));
+   g_return_if_fail (tool != NULL);
+ 
+   priv = gdk_seat_default_get_instance_private (seat);
+ 
+   if (!priv->tools)
+     priv->tools = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+ 
+   g_ptr_array_add (priv->tools, g_object_ref (tool));
+   g_signal_emit_by_name (seat, "tool-added", tool);
+ }
+ 
+ void
+ gdk_seat_default_remove_tool (GdkSeatDefault *seat,
+                               GdkDeviceTool  *tool)
+ {
+   GdkSeatDefaultPrivate *priv;
+ 
+   g_return_if_fail (GDK_IS_SEAT_DEFAULT (seat));
+   g_return_if_fail (tool != NULL);
+ 
+-- 
+2.25.1
+

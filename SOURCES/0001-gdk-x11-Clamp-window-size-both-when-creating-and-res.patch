@@ -1,0 +1,75 @@
+From 9dd198e53f53a9c2e4a791ec5b67b3ffa7b3900b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jonas=20=C3=85dahl?= <jadahl@gmail.com>
+Date: Tue, 6 Aug 2019 11:13:55 +0200
+Subject: [PATCH] gdk/x11: Clamp window size both when creating and resizing
+
+We clamp to 32767 when creating a new X11 GdkWindow due to larger sizes
+not being supported, but still try to resize to larger when
+gdk_window_resize() is called. Fix this by clamping in both places.
+
+This fixes an issue in mutter where ridiculously sized Java windows
+would not show up.
+---
+ gdk/x11/gdkwindow-x11.c | 32 ++++++++++++++++++++++----------
+ 1 file changed, 22 insertions(+), 10 deletions(-)
+
+diff --git a/gdk/x11/gdkwindow-x11.c b/gdk/x11/gdkwindow-x11.c
+index f92a146be5..4de412315d 100644
+--- a/gdk/x11/gdkwindow-x11.c
++++ b/gdk/x11/gdkwindow-x11.c
+@@ -1003,6 +1003,25 @@ connect_frame_clock (GdkWindow *window)
+     }
+ }
+ 
++static void
++clamp_window_size (GdkWindow *window,
++                   gint      *width,
++                   gint      *height)
++{
++  GdkWindowImplX11 *impl = GDK_WINDOW_IMPL_X11 (window->impl);
++
++  if (*width * impl->window_scale > 32767 ||
++      *height * impl->window_scale > 32767)
++    {
++      g_warning ("Native Windows wider or taller than 32767 pixels are not supported");
++
++      if (*width * impl->window_scale > 32767)
++        *width = 32767 / impl->window_scale;
++      if (*height  * impl->window_scale > 32767)
++        *height = 32767 /  impl->window_scale;
++    }
++}
++
+ void
+ _gdk_x11_display_create_window_impl (GdkDisplay    *display,
+                                      GdkWindow     *window,
+@@ -1101,16 +1120,7 @@ _gdk_x11_display_create_window_impl (GdkDisplay    *display,
+       class = InputOnly;
+     }
+ 
+-  if (window->width * impl->window_scale > 32767 ||
+-      window->height * impl->window_scale > 32767)
+-    {
+-      g_warning ("Native Windows wider or taller than 32767 pixels are not supported");
+-
+-      if (window->width * impl->window_scale > 32767)
+-        window->width = 32767 / impl->window_scale;
+-      if (window->height  * impl->window_scale > 32767)
+-        window->height = 32767 /  impl->window_scale;
+-    }
++  clamp_window_size (window, &window->width, &window->height);
+ 
+   impl->unscaled_width = window->width * impl->window_scale;
+   impl->unscaled_height = window->height * impl->window_scale;
+@@ -1909,6 +1919,8 @@ gdk_window_x11_move_resize (GdkWindow *window,
+     window_x11_move (window, x, y);
+   else
+     {
++      clamp_window_size (window, &width, &height);
++
+       if (with_move)
+         window_x11_move_resize (window, x, y, width, height);
+       else
+-- 
+2.21.0
+
