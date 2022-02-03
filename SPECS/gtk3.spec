@@ -32,13 +32,13 @@ Source1: ja.po
 
 # Downstream fix to filter out X-RHEL-AliasOf
 # https://bugzilla.redhat.com/show_bug.cgi?id=1259292
-#Patch18: app-chooser-fixes.patch
+Patch18: app-chooser-fixes.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1507113
-#Patch19: 0001-Add-_gtk_printer_get_hard_margins_for_paper_size.patch
+Patch19: 0001-Add-_gtk_printer_get_hard_margins_for_paper_size.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1571422
-#Patch20: 0001-gdkseatdefault-Don-t-hide-GdkWindow-on-grab-failure.patch
+Patch20: 0001-gdkseatdefault-Don-t-hide-GdkWindow-on-grab-failure.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1687745
 Patch21: 0001-gdk-x11-Clamp-window-size-both-when-creating-and-res.patch
@@ -49,6 +49,20 @@ Patch22: 0001-gtk-icon-theme-Handle-lack-of-SVG-loader-gracefully.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1717000
 Patch23: 0001-gdkseatdefault-Unref-removed-slave-devices.patch
 Patch24: 0002-gdk-x11-Properly-unref-removed-device-in-XI2-device-.patch
+
+
+
+# Downgrade dependency to be able to build on CentOS 7.4
+Patch100: downgrade-wayland-protocol-version.patch
+
+# https://bugs.eclipse.org/bugs/show_bug.cgi?id=551303
+Patch101: fix-dnd-crash.patch 
+Patch102: fix-dnd-animation.patch
+
+# https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/2069
+# https://gitlab.gnome.org/GNOME/gtk/-/commit/a136cbae8f8848d49976512f7f0ec73137428ea0
+Patch103: fix-gtk_file_chooser_get_filter.patch
+
 
 BuildRequires: pkgconfig(atk) >= %{atk_version}
 BuildRequires: pkgconfig(atk-bridge-2.0)
@@ -181,13 +195,19 @@ the functionality of the installed %{name} package.
 
 %prep
 %setup -q -n gtk+-%{version}
-#%patch18 -p1
-#%patch19 -p1
-#%patch20 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
+
+%patch100 -p1
+%patch101 -p1
+%patch102 -p1
+%patch103 -p1
+
 
 cp %{SOURCE1} po/
 
@@ -202,12 +222,12 @@ export CFLAGS='-fno-strict-aliasing %optflags'
         --enable-xcomposite \
         --enable-xdamage \
         --enable-x11-backend \
-        --disable-wayland-backend \
+        --enable-wayland-backend \
 %if 0%{?with_broadway}
         --enable-broadway-backend \
 %endif
         --enable-colord \
-        --enable-installed-tests \
+        --enable-installed-tests
 )
 
 # fight unused direct deps
@@ -333,6 +353,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %if 0%{?with_broadway}
 %{_libdir}/gtk-3.0/%{bin_version}/immodules/im-broadway.so
 %endif
+%{_libdir}/gtk-3.0/%{bin_version}/immodules/im-wayland.so
 %config(noreplace) %{_sysconfdir}/gtk-3.0/im-multipress.conf
 
 %files immodule-xim
